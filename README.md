@@ -61,11 +61,11 @@ Docker Compose 会自动拉取 `mysql:8.4`，无需手动拉镜像。只有 Dock
 ## 提交前检查
 
 ```bash
-pnpm format
+# 仅格式化本领域允许目录，例如：pnpm exec prettier --write layers/auth
 pnpm pr:check
 ```
 
-`pr:check` 会阻断越界文件，并依次执行格式、Lint、类型、Prisma 和生产 Build 检查。
+`pr:check` 会阻断越界文件，并依次执行格式、Lint、类型、Prisma 和生产 Build 检查；生产 Build 未通过时不得提交、推送或合并。
 
 ## 常用脚本
 

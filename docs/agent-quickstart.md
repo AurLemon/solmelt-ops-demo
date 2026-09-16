@@ -30,7 +30,7 @@ Agent 可以阅读全仓库来理解依赖，但只能实现成员声明的职�
 请负责维护 Git：先确认工作区是否为空，再把 origin/main 的最新版本同步到我当前的业务分支。不要覆盖、删除、reset、clean、stash 或擅自提交我已有的工作区内容；如果有本地改动就停止并告诉我。如果发生冲突，列出冲突文件、双方差异和涉及的业务领域，询问我自己负责的内容应保留哪一侧，得到我明确选择后再处理；禁止擅自解决冲突、force push 或丢弃文件。
 ```
 
-Agent 的实际动作是 `git status --short`，确认无输出后执行 `git pull --no-rebase origin main`。这会把组长更新的版本、根提示词和公共文档带到当前业务分支；如果本次更新包含 `package.json` 或 `pnpm-lock.yaml`，还要执行 `pnpm install --frozen-lockfile`，再运行 `pnpm env:check` 和 `pnpm pr:check`。任何冲突都必须先交给成员判断，不得以“保持能编译”为理由替成员选择内容。
+Agent 的实际动作是先执行 `git fetch origin`、`git status --short`，确认无输出且 `origin/main` 确有未同步提交后，再执行 `git pull --no-rebase origin main`。这会把组长更新的版本、根提示词和公共文档带到当前业务分支；如果本次更新包含 `package.json` 或 `pnpm-lock.yaml`，还要执行 `pnpm install --frozen-lockfile`，再运行 `pnpm env:check` 和 `pnpm pr:check`。任何冲突都必须先交给成员判断，不得以“保持能编译”为理由替成员选择内容。
 
 ## 所有组共用的 `.env` 与 Docker 数据库
 
@@ -77,7 +77,7 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 ```text
 你正在 SolMelt 仓库根目录工作。只读，不要修改文件、安装依赖、启动服务、创建提交或推送。
 
-请阅读 README.md、docs/environment-setup.md、docs/acceptance-baseline.md、docs/architecture.md、docs/api-contract.md、根 AGENTS.md，以及当前领域的 layers/<domain>/AGENTS.md 和 docs/ai/<domain>.md。
+请阅读 README.md、docs/environment-setup.md、docs/acceptance-baseline.md、docs/architecture.md、docs/domain-glossary.md、docs/api-contract.md、docs/event-contract.md、docs/db-ownership.md、根 AGENTS.md，以及当前领域的 layers/<domain>/AGENTS.md 和 docs/ai/<domain>.md。
 
 然后用简洁中文确认：当前 Git 分支、最低验收目标、允许修改目录、禁止修改目录、涉及的 API 和事件、提交前必须运行的命令。若信息不足或分支不对，停止并指出缺失项。
 ```
@@ -93,11 +93,11 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 
 先阅读 docs/agent-quickstart.md、README.md、docs/environment-setup.md、docs/acceptance-baseline.md、docs/architecture.md、docs/api-contract.md、根 AGENTS.md、layers/<domain>/AGENTS.md、docs/ai/<domain>.md，以及与任务直接相关的冻结契约。
 
-先检查 git status、git remote -v 和当前分支是否落后 origin/feat/<domain>。先复述任务目标、最低验收、允许文件、接口/事件、人工验收动作；未经确认不要扩大范围。
+先执行 git fetch origin，再检查 git status、git remote -v、当前分支，以及当前分支是否有未同步的 origin/main。先复述任务目标、最低验收、允许文件、接口/事件、人工验收动作；未经确认不要扩大范围。
 
 禁止修改 shared、Prisma Schema、migration、package.json、pnpm-lock.yaml、根配置和其他 Layer；需要公共改动时提出 Contract Change。禁止 Mock 数据、显式 any、@ts-ignore、静默吞错、调试日志、额外依赖和任务书外的框架或协议。
 
-完成后删除调试代码，运行 pnpm format 与 pnpm pr:check。使用 Conventional Commits：<type>(<scope>): <中文摘要>；一个提交只包含一个可说明的变更。报告实际修改文件、验证结果、数据流和未完成项，然后交给新的只读 AI 会话 Review。
+完成后删除调试代码，只对 <allowed-paths> 执行 `pnpm exec prettier --write <allowed-paths>`，不得运行全仓 `pnpm format`。随后必须执行 pnpm pr:check；该命令包含生产 Build，未通过时不得声明完成、提交或推送。通过后先用本提示词逐项自查范围、契约、Mock 数据、鉴权与错误路径，再交给新的只读 AI 会话 Review。使用 Conventional Commits：<type>(<scope>): <中文摘要>；一个提交只包含一个可说明的变更。报告实际修改文件、pnpm pr:check 成功结果、数据流和未完成项。
 ```
 
 其中 `<domain>` 和 `<allowed-paths>` 必须替换为本组实际值：`auth`/`layers/auth/**`、`device`/`layers/device/**`、`telemetry`/`layers/telemetry/**` 与 `scripts/simulator/**`、`dashboard`/`layers/dashboard/**`。四组都可以读取公共目录，但公共目录和其他 Layer 默认不可写。
@@ -125,7 +125,7 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 7. 执行 corepack enable 和 corepack prepare pnpm@11.24.0 --activate，然后执行 pnpm env:check、pnpm install --frozen-lockfile、docker compose config --quiet。
 8. 启动 Docker Compose：docker compose up -d --wait；随后执行 docker compose ps，确认 mysql 服务为 healthy；再执行 `docker compose exec -T mysql sh -c 'mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD" --silent'`，验证 MySQL 可连接。若 Docker 镜像拉取失败、Docker daemon 未启动、3306 被占用或数据库账号错误，只报告完整错误并指导我处理；不要删除数据卷、不要自动切换到原生 MySQL、不要修改 Docker Desktop 代理。
 9. 数据库连接通过后，执行 pnpm db:migrate:deploy、pnpm db:seed、pnpm db:migrate:status。只有这些命令成功才算所有组通用环境完成。telemetry 组再按 scripts/simulator/README.md 创建 Python .venv 并安装 requests；不要把依赖装进系统 Python。
-10. 最后执行 pnpm env:check、pnpm pr:check（如果数据库或依赖仍未就绪，记录阻塞原因），并报告当前分支、工具版本、registry、.env 是否已存在但不显示内容、Docker 容器健康状态、数据库迁移状态、实际执行命令和未完成项。
+10. 最后执行 pnpm env:check、pnpm pr:check（该命令包含生产 Build；如果数据库或依赖仍未就绪，记录阻塞原因）。未通过时不得报告环境完成，并报告当前分支、工具版本、registry、.env 是否已存在但不显示内容、Docker 容器健康状态、数据库迁移状态、实际执行命令和未完成项。
 
 完成后不要启动长期后台服务，不要提交或推送。请用“已完成 / 需我手动完成 / 阻塞原因”三段格式反馈，并隐藏密码、令牌、JWT_SECRET 和代理凭据。
 ```
@@ -139,8 +139,8 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 ## 每次修改后的动作
 
 1. 先审阅 Agent 提出的计划和文件范围；涉及公共契约时先走 Contract Change。
-2. 完成实现后执行 `pnpm format`、`pnpm pr:check`、`git diff --check`。
+2. 完成实现后，仅对本领域允许目录执行 `pnpm exec prettier --write <allowed-paths>`，再执行 `pnpm pr:check`、`git diff --check`。`pnpm pr:check` 的生产 Build 必须通过；未通过不得提交、推送或标记完成。
 3. 使用 `git status` 确认没有 Agent 意外生成的无关文件；只 `git add` 明确审核过的文件。
 4. 使用 Conventional Commit 提交并推送固定领域分支，再按 [Cowork 指南](cowork-guide.md) 发起 PR 和独立只读 Review。
 
-`AGENTS.md` 和提示词负责提供上下文，不是安全边界。真正阻止越权合并的是 `pnpm scope:check`、Gitee 保护分支、PR Review 与成员对实际 diff 的确认。
+`AGENTS.md` 和提示词负责提供上下文，不是安全边界。`pnpm scope:check` 只约束四个固定业务分支，`contract/*` 与 `chore/*` 由组长维护且脚本会跳过范围校验；这些分支的授权必须依赖 Gitee 保护分支、组长批准记录、PR Review 与成员对实际 diff 的确认。

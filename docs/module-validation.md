@@ -21,7 +21,7 @@ pnpm dev
 curl -fsS http://localhost:3000/api/health
 ```
 
-验证结束时停止本次启动的服务，保留数据库数据，执行 `pnpm pr:check` 和 `git diff --check`。若本次变更涉及依赖、公共契约或数据库迁移，必须在反馈中明确标记并交给组长处理。
+验证结束时停止本次启动的服务，保留数据库数据，执行 `pnpm pr:check` 和 `git diff --check`。`pnpm pr:check` 中的生产 Build 必须通过；未通过时状态只能标记为 `BLOCKED`，不得提交、推送或交付。若本次变更涉及依赖、公共契约或数据库迁移，必须在反馈中明确标记并交给组长处理。
 
 ## Auth：登录与权限
 

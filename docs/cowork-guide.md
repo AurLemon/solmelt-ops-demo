@@ -53,6 +53,7 @@ pnpm db:migrate:status
 
 ```bash
 git switch <本组固定分支>
+git fetch origin
 git status --short
 git remote -v
 # 若有输出，先让 Agent 报告本地改动，不要继续同步
@@ -60,8 +61,8 @@ git remote -v
 git pull --no-rebase origin main
 # 只同步同组成员的分支时才执行：
 git pull --ff-only origin <本组固定分支>
-# 完成一个可说明的小任务
-pnpm format
+# 完成一个可说明的小任务；仅格式化本领域允许目录
+pnpm exec prettier --write <本领域允许目录>
 pnpm pr:check
 git status
 git diff --check
@@ -92,7 +93,7 @@ git push origin <本组固定分支>
 2. 完整填写 PR 模板，明确 AI 工具、人工修改和验证结果。
 3. 同组另一位成员先 Review。
 4. 使用新 AI 会话按 `docs/ai-review.md` 做只读 Review。
-5. 组长本地执行 `pnpm pr:check` 并按 auth → device → telemetry → dashboard 顺序集成。
+5. 组长本地执行 `pnpm pr:check`（其中生产 Build 必须通过）并按 auth → device → telemetry → dashboard 顺序集成；未通过不得合并。
 6. 使用 merge commit，保留成员提交记录。
 
 其他组完成合并后，组员不需要手动理解 fetch/merge；在自己的 feat 分支直接让 Agent 执行：
@@ -114,7 +115,7 @@ git pull --no-rebase origin main
 - 兼容与迁移方案；
 - 可复现证据。
 
-组长确认后在 `contract/<slug>` 分支集中修改并重新发布契约。
+组长确认后在 `contract/<slug>` 分支集中修改并重新发布契约。`scope:check` 对 `contract/*` 只会跳过范围校验，不能证明 Contract Change 已获批准；Gitee 上必须要求组长审批该 PR，并在 PR 中附上对应批准记录。
 
 ## 常见错误
 
