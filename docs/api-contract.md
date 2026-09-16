@@ -59,7 +59,7 @@
 | GET    | `/api/v1/device/devices/:id/latest`      | `device:read`  | 无                                               | `DeviceLatestValue[]`                      |
 | GET    | `/api/v1/device/devices/:id/online`      | `device:read`  | 无                                               | `{ online: boolean, lastReportedAt: string | null }` |
 
-产品标识、九台设备和三十个属性均以 `.requirements/学生复现-物模型.zip` 为唯一事实源。产品创建只接受标识为 `Z60KbveZzXk8` 的立式熔盐泵；设备创建只接受物模型 ZIP 中的九个编号、名称和泵型，重复创建返回冲突。物模型导入只接受 ZIP 内任意一份 JSON：服务端须校验产品标识和名称，以及恰好 30 个属性的 `identifier`、`dataType`、`unit` 均与规范完全一致；重复导入幂等，不得新增、删除或覆盖既有定义。设备删除为逻辑删除；在线表示未删除且最近 300 秒存在成功上报，启用状态只决定是否接受新上报。
+产品标识、九台设备和三十个属性均以 `.requirements/学生复现-物模型/` 内 9 份 JSON 为唯一事实源。产品创建只接受标识为 `Z60KbveZzXk8` 的立式熔盐泵；设备创建只接受物模型目录中的九个编号、名称和泵型，重复创建返回冲突。物模型导入只接受目录内任意一份 JSON：服务端须校验产品标识和名称，以及恰好 30 个属性的 `identifier`、`dataType`、`unit` 均与规范完全一致；重复导入幂等，不得新增、删除或覆盖既有定义。设备删除为逻辑删除；在线表示未删除且最近 300 秒存在成功上报，启用状态只决定是否接受新上报。
 
 ## Telemetry
 

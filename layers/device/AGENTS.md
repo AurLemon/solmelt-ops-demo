@@ -14,7 +14,7 @@
 
 ## 不可变规则
 
-- `.requirements/学生复现-物模型.zip` 是设备和属性的唯一事实源。
+- `.requirements/学生复现-物模型/` 内 9 份 JSON 是设备和属性的唯一事实源。
 - 产品标识固定为 `Z60KbveZzXk8`，不得改写设备编号、名称、属性标识或单位。
 - 在线窗口固定为 300 秒，状态只允许 `ENABLED` 和 `DISABLED`。
 - API 使用 `/api/v1/device/*`，响应必须使用统一 `ApiResult<T>`。

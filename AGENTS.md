@@ -4,7 +4,7 @@
 
 本仓库是福建理工大学人工智能与交通工程学院实验班的光热熔盐泵智能运营管理系统小组作业。目标是实现登录权限、物模型设备、数据采集查询、监测大屏四个板块，并在答辩现场跑通完整数据闭环。
 
-业务事实的权威顺序固定为：`.requirements/复现任务.docx` → `.requirements/学生复现-物模型.zip` 的 9 份 JSON → 参考截图 → `熔盐泵原理入门.html` → `.team/1. 项目方案书.md`。完整最低验收和答辩链见 `docs/acceptance-baseline.md`。
+业务事实的权威顺序固定为：`.requirements/复现任务.docx` → `.requirements/学生复现-物模型/` 的 9 份 JSON → `.requirements/学生复现-参考截图/` → `熔盐泵原理入门.html` → `.team/1. 项目方案书.md`。完整最低验收和答辩链见 `docs/acceptance-baseline.md`。
 
 原系统和截图只用于需求、工业场景与效果参考；不需要像素级复刻，更不能自行创造未约定业务。
 

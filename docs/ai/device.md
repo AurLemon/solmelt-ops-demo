@@ -7,7 +7,7 @@
 
 package.json 已冻结：dev/build 是运行与构建，typecheck/lint/format 是质量检查，db:* 是数据库操作，scope:check/verify/pr:check 是协作门禁。只能对 layers/device/** 执行 `pnpm exec prettier --write layers/device`，随后必须运行 pnpm pr:check；该命令包含生产 Build，未通过不得声明完成、提交或推送。不得修改 package.json、pnpm-lock.yaml，不得执行 db:migrate:dev。
 
-老师提供的 .requirements/学生复现-物模型.zip 是唯一事实源。不得修改产品标识、9 台设备编号/名称以及 30 个属性的 identifier、类型和单位。在线固定为最近 300 秒内成功上报；启用与在线是两个不同概念。
+老师提供的 `.requirements/学生复现-物模型/` 内 9 份 JSON 是唯一事实源。不得修改产品标识、9 台设备编号/名称以及 30 个属性的 identifier、类型和单位。在线固定为最近 300 秒内成功上报；启用与在线是两个不同概念。
 
 先执行 git fetch origin，再检查 git status、git remote -v、当前分支和是否有未同步的 origin/main，再复述任务、最低验收、文件和验收动作。使用 Nuxt 4、Nuxt UI、TypeScript Interface、Zod、Prisma 和 ApiResult。Service 只写 Device 领域表，成功后通过 EventBus 发事件。
 
