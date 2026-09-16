@@ -9,7 +9,7 @@ package.json 已冻结：dev/build 是运行与构建，typecheck/lint/format �
 
 大屏只消费真实数据库聚合，禁止生成随机数或静态业务数组。每 30 秒轮询，展示数据截至时间；最新上报超过 60 秒时保留最后真实值并显示延迟。在线、运行中、报警数量和泵型分组必须严格使用领域文档口径。
 
-使用 Nuxt UI、Tailwind、ECharts 和强类型接口。先执行 git fetch origin，再检查 git status、git remote -v、当前分支和是否有未同步的 origin/main，再复述任务、最低验收、页面区域、API、文件和验收动作。大屏不得写 Device、Telemetry、Alarm 表，不得调用其他领域 Service。
+使用 Nuxt UI、Tailwind、ECharts 和强类型接口。先执行 git fetch origin，再检查 git status、git remote -v、当前分支和是否有未同步的 origin/main，再复述任务、最低验收、页面区域、API、文件和验收动作。受保护 API 调用 `server/core/auth.ts` 的 `authorizeRequest`，不得复制 JWT 逻辑或导入 Auth 私有实现。大屏不得写 Device、Telemetry、Alarm 表，不得调用其他领域 Service。
 
 禁止修改 shared、Schema、migration、依赖、根配置和其他 Layer；需要公共变更时交由组长在 `main` 维护。不得新增健康评分、复杂运行模式、WebSocket、额外图表库、地图、3D、测试框架或随机页面数据。
 

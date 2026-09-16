@@ -30,6 +30,15 @@ Dashboard 只读聚合
 5. Service 只操作本领域表；跨领域反应通过事件处理器完成。
 6. Dashboard 不写核心业务表，只查询冻结的只读口径。
 
+## 公共鉴权边界
+
+`server/core/auth.ts` 是组长维护的 JWT 公共基础能力。Auth 领域负责验证码、账号、角色、菜单和登录业务；其他领域只调用公共鉴权函数，不复制 JWT 解析逻辑，也不读取 Auth 私有 Service。
+
+- `issueAccessToken(claims)` 使用本机 `JWT_SECRET` 签发 8 小时有效的 HS256 Token，返回 Token 和 UTC 到期时间。
+- `authorizeRequest(event, permission?)` 返回显式判别结果。成功分支携带 `AuthClaims`；失败分支携带冻结格式的 `ApiFailure`。
+- 缺失、空白、无效或过期 Token 返回 `401 UNAUTHENTICATED`；凭证有效但缺少权限返回 `403 FORBIDDEN`。
+- 浏览器端由 Auth Layer 使用 `localStorage` 保存 Token；收到 401、Token 过期或主动退出时必须清除。密码、验证码、Token 和 `JWT_SECRET` 不得写入日志、截图或协作反馈。
+
 ## Layer 内部组织
 
 业务组按领域负责，Layer 内部可以同时包含页面、组件、composable、`server/api` 适配器和本领域 Service；这些物理目录由 Nuxt Layer 合并到应用中，不代表 Agent 只能负责其中一个目录。根 `app/`、`server/api/`、`server/core/` 和 `shared/` 是公共面，业务组只能阅读；确需修改时由组长在 `main` 维护。

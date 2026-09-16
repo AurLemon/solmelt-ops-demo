@@ -56,7 +56,7 @@ Docker Compose 会自动拉取 `mysql:8.4`，无需手动拉镜像。只有 Dock
 
 ## Agent 入门
 
-成员可以使用自己的 Codex、Claude Code、DeepSeek Harness 或其他具备文件与终端能力的 Agent。不要把 API Key、代理地址或个人 Agent 配置写入仓库；所有 Agent 的职责声明、主线同步、新手环境配置提示词和只读确认步骤见 [Agent 入门](docs/agent-quickstart.md)。模块级验证和组员反馈见 [模块验证与反馈手册](docs/module-validation.md)。
+成员可以使用自己的 Codex、Claude Code、DeepSeek Harness 或其他具备文件与终端能力的 Agent。不要把 API Key、代理地址或个人 Agent 配置写入仓库；所有 Agent 的职责声明、主线同步、新手环境配置提示词和只读确认步骤见 [Agent 入门](docs/agent-quickstart.md)。周四课堂必须按 [四组分步工作坊](docs/ai/thursday-workshop.md) 逐段复制 Prompt、人工验收并轮换 A/B 角色，不得只说“做完某模块”。模块级验证和组员反馈见 [模块验证与反馈手册](docs/module-validation.md)。
 
 ## 提交前检查
 
@@ -101,5 +101,6 @@ pnpm db:studio
 - [数据库归属](docs/db-ownership.md)
 - [Cowork 指南](docs/cowork-guide.md)
 - [AI Review 指南](docs/ai-review.md)
+- [周四四组分步工作坊](docs/ai/thursday-workshop.md)
 - [环境指南](docs/environment-setup.md)
 - [任务书验收基线](docs/acceptance-baseline.md)

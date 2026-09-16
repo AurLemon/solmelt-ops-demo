@@ -73,6 +73,8 @@ git push origin <本组固定分支>
 
 同组两人不要同时修改同一个文件。开始前在群里声明当前任务和文件，完成后立即推送并通知搭档同步。
 
+首次课堂开发采用 Driver/Navigator 轮换：A 在自己的电脑完成前半 checkpoint，通过门禁后提交并推送；B 保持工作区为空，在自己的电脑执行 `git pull --ff-only origin <本组固定分支>` 后接手后半 checkpoint，A 转为 Navigator。两人各保留一个可解释的原子提交；A/B 可在下一次任务中互换，但一个未完成的 checkpoint 不得由两台电脑并行编辑。
+
 ## Commit 规范
 
 提交消息采用 Conventional Commits：`<type>(<scope>): <中文摘要>`。一次提交只解决一个可说明的变更，禁止 `wip`、`update`、`fix bug` 等无法说明影响的摘要。
