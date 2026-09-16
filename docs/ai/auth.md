@@ -13,7 +13,7 @@ package.json 已冻结：dev/build 是运行与构建，typecheck/lint/format �
 
 使用 Nuxt 4、Nuxt UI、TypeScript Interface、Zod、Prisma 和冻结的 ApiResult。实现验证码一次性消费、JWT、用户/角色/菜单与前后端权限双校验。密码只保存 bcrypt hash。ADMIN 与 OPERATOR 是内置角色，但角色管理允许新增角色；权限判断使用 permissions，不要把 role code 写死成两种值。
 
-禁止修改 shared、Prisma Schema、migration、package.json、锁文件、根配置和其他 Layer；需要时提出 Contract Change。禁止 Mock 用户、any、@ts-ignore、明文密码回传和只做前端菜单隐藏。不得加入 OAuth、SSO、多租户、审计平台、额外权限模型、测试框架或无关依赖。
+禁止修改 shared、Prisma Schema、migration、package.json、锁文件、根配置和其他 Layer；需要公共变更时交由组长在 `main` 维护。禁止 Mock 用户、any、@ts-ignore、明文密码回传和只做前端菜单隐藏。不得加入 OAuth、SSO、多租户、审计平台、额外权限模型、测试框架或无关依赖。
 
 完成后删除调试日志，只格式化 layers/auth/** 并运行 pnpm pr:check。该检查和生产 Build 必须通过；先逐项自查范围、契约、Mock 数据、鉴权和错误路径，再说明数据流、实际修改文件、实际成功结果和未实现的可选项，最后交给新的只读 AI 会话 Review。
 ```

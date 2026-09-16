@@ -90,7 +90,7 @@ pnpm db:seed
 pnpm db:studio
 ```
 
-四个业务组不得自行生成 migration。需要改动 Schema 时按 `docs/cowork-guide.md` 提交 Contract Change，由组长统一生成并验证迁移。
+四个业务组不得自行生成 migration。需要改动 Schema 时由组长按 `docs/cowork-guide.md` 在 `main` 统一生成并验证迁移。
 
 ## 文档导航
 
@@ -103,5 +103,3 @@ pnpm db:studio
 - [AI Review 指南](docs/ai-review.md)
 - [环境指南](docs/environment-setup.md)
 - [任务书验收基线](docs/acceptance-baseline.md)
-
-

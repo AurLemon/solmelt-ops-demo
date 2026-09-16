@@ -9,7 +9,7 @@
 | 数据采集查询 | `feat/telemetry` |
 | 监测大屏     | `feat/dashboard` |
 
-`main` 是可运行基线和最终演示分支，必须在 Gitee 设置为保护分支，禁止直接推送和强制推送，只通过 PR 合并。
+`main` 是可运行基线和最终演示分支。组长维护公共内容时直接提交并推送到 `main`；禁止 force push。四个 `feat/*` 分支只用于业务组并行开发。
 
 ## 第一次参与
 
@@ -105,22 +105,14 @@ git pull --no-rebase origin main
 
 仅当 `git status --short` 没有输出时执行。组员让 Agent 负责 Git 同步，但 Agent 不得覆盖、删除、reset、clean、stash 或擅自提交已有工作区内容；有本地改动时先报告。发生冲突时列出冲突文件和双方差异，询问组员自己负责的内容应保留哪一侧，确认后才能处理；处理后重新执行 `pnpm pr:check`。不使用 force push，不要求成员进行 rebase 或 cherry-pick。
 
-## Contract Change
+## 公共改动
 
-业务组不得直接修改 `shared/`、Prisma Schema、migration、根配置、依赖和其他 Layer。确有需要时使用 Gitee Contract Change 模板说明：
-
-- 当前契约为什么阻塞功能；
-- 建议的新旧字段或行为；
-- 受影响领域；
-- 兼容与迁移方案；
-- 可复现证据。
-
-组长确认后在 `contract/<slug>` 分支集中修改并重新发布契约。`scope:check` 对 `contract/*` 只会跳过范围校验，不能证明 Contract Change 已获批准；Gitee 上必须要求组长审批该 PR，并在 PR 中附上对应批准记录。
+业务组不得直接修改 `shared/`、Prisma Schema、migration、根配置、依赖和其他 Layer。确有需要时说明受影响的字段、接口、领域和兼容方案；组长确认后直接在 `main` 集中修改并同步文档。
 
 ## 常见错误
 
 - 推送被拒绝或忘记同步：先执行 `git status --short` 和 `git remote -v`；工作区为空时让 Agent 执行 `git pull --no-rebase origin main` 或 `git pull --ff-only origin <本组分支>`，不要 force push。
-- `scope:check` 失败：撤回越界文件，或发 Contract Change。
+- `scope:check` 失败：撤回越界文件，或请组长在 `main` 维护公共改动。
 - Build 失败：提交完整错误给 AI，不要删除类型、改成 `any` 或关闭规则。
 - 数据不一致：回到老师物模型和领域文档，不要在页面临时补假数据。
 - Docker 不可用：按 `docs/environment-setup.md` 使用原生 MySQL 8.4 兜底；不要同时让 Docker 和原生 MySQL 占用 3306。

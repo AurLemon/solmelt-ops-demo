@@ -20,7 +20,7 @@
 我需要和这些领域协作：<无 / device / telemetry / dashboard>；只通过冻结接口、事件和 PR 协作。
 ```
 
-Agent 可以阅读全仓库来理解依赖，但只能实现成员声明的职责和当前任务。发现需要修改其他 Layer、`shared/`、Prisma、根配置或依赖时，必须先停下，列出 Contract Change，不得顺手代改。
+Agent 可以阅读全仓库来理解依赖，但只能实现成员声明的职责和当前任务。发现需要修改其他 Layer、`shared/`、Prisma、根配置或依赖时，必须先停下，列出影响范围并由组长在 `main` 维护，不得顺手代改。
 
 ## 主线更新：成员只需一句话
 
@@ -55,7 +55,7 @@ pnpm db:migrate:status
 
 Docker 本身必须真实启动且连接成功，不能只安装 Desktop 或只看到容器镜像。Docker 不可用、3306 被占用、账号权限不匹配或已有数据卷的初始化变量不生效时，按 [环境安装与故障处理](environment-setup.md) 排查；不要执行 `docker compose down -v` 清库。
 
-数据库结构不是通过 push 数据库完成的。负责数据库契约的组长或指定成员只提交 `prisma/schema/`、迁移、Seed 或 Docker 配置的代码变更；变更合入 `main` 后，全体成员执行主线同步，再在自己的本机运行 `pnpm db:migrate:deploy`、`pnpm db:seed` 和 `pnpm db:migrate:status`，把结果反馈到 PR。当前基础环境可以先配置和验证，业务 Schema 有变更时再按 Contract Change 协作，不必为了等待数据库业务开发而延后环境安装。
+数据库结构不是通过 push 数据库完成的。负责数据库契约的组长或指定成员只提交 `prisma/schema/`、迁移、Seed 或 Docker 配置的代码变更；变更推送到 `main` 后，全体成员执行主线同步，再在自己的本机运行 `pnpm db:migrate:deploy`、`pnpm db:seed` 和 `pnpm db:migrate:status`，把结果反馈给组长。当前基础环境可以先配置和验证，业务 Schema 有变更时由组长在 `main` 协调，不必为了等待数据库业务开发而延后环境安装。
 
 ## 领域负责，不是单文件夹负责
 
@@ -68,7 +68,7 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 | `app/`、`server/core/`、`shared/`、`prisma/`、根配置和依赖 | 可阅读；默认只读，由组长维护                |
 | 其他 `layers/*`                                            | 可阅读以理解契约；禁止写入或导入私有实现    |
 
-如果一个功能确实需要跨目录或跨领域修改，先说明受影响的契约、数据流和兼容方案，提交 Contract Change；不要为了让目录看起来集中而移动文件。`feat/telemetry` 对 `scripts/simulator/**` 的写入是已授权的领域例外，不需要为此重复提交 Contract Change。
+如果一个功能确实需要跨目录或跨领域修改，先说明受影响的契约、数据流和兼容方案，由组长在 `main` 维护；不要为了让目录看起来集中而移动文件。`feat/telemetry` 对 `scripts/simulator/**` 的写入是已授权的领域例外。
 
 ## 首次只读确认
 
@@ -95,7 +95,7 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 
 先执行 git fetch origin，再检查 git status、git remote -v、当前分支，以及当前分支是否有未同步的 origin/main。先复述任务目标、最低验收、允许文件、接口/事件、人工验收动作；未经确认不要扩大范围。
 
-禁止修改 shared、Prisma Schema、migration、package.json、pnpm-lock.yaml、根配置和其他 Layer；需要公共改动时提出 Contract Change。禁止 Mock 数据、显式 any、@ts-ignore、静默吞错、调试日志、额外依赖和任务书外的框架或协议。
+禁止修改 shared、Prisma Schema、migration、package.json、pnpm-lock.yaml、根配置和其他 Layer；需要公共改动时交由组长在 `main` 维护。禁止 Mock 数据、显式 any、@ts-ignore、静默吞错、调试日志、额外依赖和任务书外的框架或协议。
 
 完成后删除调试代码，只对 <allowed-paths> 执行 `pnpm exec prettier --write <allowed-paths>`，不得运行全仓 `pnpm format`。随后必须执行 pnpm pr:check；该命令包含生产 Build，未通过时不得声明完成、提交或推送。通过后先用本提示词逐项自查范围、契约、Mock 数据、鉴权与错误路径，再交给新的只读 AI 会话 Review。使用 Conventional Commits：<type>(<scope>): <中文摘要>；一个提交只包含一个可说明的变更。报告实际修改文件、pnpm pr:check 成功结果、数据流和未完成项。
 ```
@@ -138,9 +138,9 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 
 ## 每次修改后的动作
 
-1. 先审阅 Agent 提出的计划和文件范围；涉及公共契约时先走 Contract Change。
+1. 先审阅 Agent 提出的计划和文件范围；涉及公共契约时由组长确认后在 `main` 维护。
 2. 完成实现后，仅对本领域允许目录执行 `pnpm exec prettier --write <allowed-paths>`，再执行 `pnpm pr:check`、`git diff --check`。`pnpm pr:check` 的生产 Build 必须通过；未通过不得提交、推送或标记完成。
 3. 使用 `git status` 确认没有 Agent 意外生成的无关文件；只 `git add` 明确审核过的文件。
 4. 使用 Conventional Commit 提交并推送固定领域分支，再按 [Cowork 指南](cowork-guide.md) 发起 PR 和独立只读 Review。
 
-`AGENTS.md` 和提示词负责提供上下文，不是安全边界。`pnpm scope:check` 只约束四个固定业务分支，`contract/*` 与 `chore/*` 由组长维护且脚本会跳过范围校验；这些分支的授权必须依赖 Gitee 保护分支、组长批准记录、PR Review 与成员对实际 diff 的确认。
+`AGENTS.md` 和提示词负责提供上下文，不是安全边界。`pnpm scope:check` 只约束四个固定业务分支；`main` 由组长直接维护，仍须保留成员对实际 diff 的确认。

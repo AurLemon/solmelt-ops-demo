@@ -75,4 +75,4 @@
 | GET  | `/api/v1/dashboard/alarms/recent` | `AlarmSummary[]`            |
 | GET  | `/api/v1/dashboard/runtime-mode`  | 模式、原因、dataUntil       |
 
-接口实现不得擅自重命名字段。确需调整时提交 Contract Change，并同步 TypeScript Interface 与本文档。
+接口实现不得擅自重命名字段。确需调整时由组长确认，并在 `main` 同步 TypeScript Interface 与本文档。

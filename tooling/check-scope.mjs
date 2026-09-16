@@ -45,14 +45,12 @@ const branch = currentBranch()
 const allowedPrefixes = scopeRules[branch]
 
 if (!allowedPrefixes) {
-	if (branch === 'main' || branch.startsWith('chore/') || branch.startsWith('contract/')) {
-		console.log(
-			`scope:check 跳过范围校验：${branch} 仅可由组长按 Gitee 审批流程维护，不能据此视为已获授权。`,
-		)
+	if (branch === 'main') {
+		console.log(`scope:check 跳过范围校验：${branch} 仅可由组长维护，不能据此视为已获授权。`)
 		process.exit(0)
 	}
 
-	console.error(`scope:check 不认识分支 ${branch}。请使用四个固定 feat 分支或组长维护分支。`)
+	console.error(`scope:check 不认识分支 ${branch}。请使用 main 或四个固定 feat 分支。`)
 	process.exit(1)
 }
 

@@ -16,4 +16,4 @@
 - Payload 必须使用 `shared/events.ts` 中的 Interface。
 - Handler 不得反向调用发布者 Service。
 - 同一事件 Handler 应可重复执行或通过唯一约束避免重复数据。
-- 新增或修改事件属于 Contract Change。
+- 新增或修改事件须由组长确认，并在 `main` 同步更新相关契约文档。

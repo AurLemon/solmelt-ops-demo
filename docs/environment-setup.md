@@ -102,7 +102,7 @@ pnpm db:migrate:deploy
 pnpm db:seed
 ```
 
-只有负责 Contract Change 的组长需要 `pnpm db:migrate:dev`。该命令会创建临时 shadow database，因此额外需要对本地开发账号授予全局开发权限；普通组员不应执行此命令：
+只有负责 Schema 变更的组长需要 `pnpm db:migrate:dev`。该命令会创建临时 shadow database，因此额外需要对本地开发账号授予全局开发权限；普通组员不应执行此命令：
 
 ```sql
 GRANT CREATE, DROP, ALTER, REFERENCES ON *.* TO 'solmelt'@'localhost';

@@ -31,7 +31,7 @@ Dashboard 只读聚合
 
 ## Layer 内部组织
 
-业务组按领域负责，Layer 内部可以同时包含页面、组件、composable、`server/api` 适配器和本领域 Service；这些物理目录由 Nuxt Layer 合并到应用中，不代表 Agent 只能负责其中一个目录。根 `app/`、`server/api/`、`server/core/` 和 `shared/` 是公共面，业务组只能阅读；确需修改时走 Contract Change。
+业务组按领域负责，Layer 内部可以同时包含页面、组件、composable、`server/api` 适配器和本领域 Service；这些物理目录由 Nuxt Layer 合并到应用中，不代表 Agent 只能负责其中一个目录。根 `app/`、`server/api/`、`server/core/` 和 `shared/` 是公共面，业务组只能阅读；确需修改时由组长在 `main` 维护。
 
 ## 领域归属
 
