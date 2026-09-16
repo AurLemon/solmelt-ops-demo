@@ -1,0 +1,11 @@
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
+  vue-demi: true
+peerDependencyRules:
+  allowedVersions:
+    cac: '7'
+minimumReleaseAgeExclude:
+  - '@types/node@24.13.5'

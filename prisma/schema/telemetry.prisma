@@ -1,0 +1,62 @@
+model TelemetryReport {
+  id         Int              @id @default(autoincrement())
+  deviceId   Int              @map("device_id")
+  reportedAt DateTime         @map("reported_at")
+  receivedAt DateTime         @default(now()) @map("received_at")
+  rawJson    Json             @map("raw_json")
+  device     Device           @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+  values     TelemetryValue[]
+
+  @@unique([deviceId, reportedAt])
+  @@index([reportedAt])
+  @@map("telemetry_reports")
+}
+
+model TelemetryValue {
+  id                 Int             @id @default(autoincrement())
+  reportId           Int             @map("report_id")
+  propertyIdentifier String          @map("property_identifier") @db.VarChar(64)
+  valueNumber        Decimal?        @map("value_number") @db.Decimal(18, 6)
+  valueBoolean       Boolean?        @map("value_boolean")
+  valueText          String?         @map("value_text") @db.VarChar(255)
+  report             TelemetryReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, propertyIdentifier])
+  @@index([propertyIdentifier])
+  @@map("telemetry_values")
+}
+
+model DeviceLatestValue {
+  id                 Int      @id @default(autoincrement())
+  deviceId           Int      @map("device_id")
+  propertyIdentifier String   @map("property_identifier") @db.VarChar(64)
+  valueNumber        Decimal? @map("value_number") @db.Decimal(18, 6)
+  valueBoolean       Boolean? @map("value_boolean")
+  valueText          String?  @map("value_text") @db.VarChar(255)
+  reportedAt         DateTime @map("reported_at")
+  device             Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, propertyIdentifier])
+  @@index([reportedAt])
+  @@map("device_latest_values")
+}
+
+model Alarm {
+  id          Int         @id @default(autoincrement())
+  deviceId    Int         @map("device_id")
+  metric      String      @db.VarChar(64)
+  threshold   Decimal     @db.Decimal(18, 6)
+  actualValue Decimal     @map("actual_value") @db.Decimal(18, 6)
+  level       AlarmLevel
+  status      AlarmStatus @default(UNHANDLED)
+  occurredAt  DateTime    @map("occurred_at")
+  handledAt   DateTime?   @map("handled_at")
+  handlerId   Int?        @map("handler_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  device      Device      @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+
+  @@index([deviceId, occurredAt])
+  @@index([status, level, occurredAt])
+  @@map("alarms")
+}

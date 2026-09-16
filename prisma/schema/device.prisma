@@ -1,0 +1,52 @@
+model Product {
+  id         Int               @id @default(autoincrement())
+  identifier String            @unique @db.VarChar(64)
+  name       String            @db.VarChar(100)
+  remark     String?           @db.VarChar(255)
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+  properties ProductProperty[]
+  devices    Device[]
+
+  @@map("products")
+}
+
+model ProductProperty {
+  id         Int              @id @default(autoincrement())
+  productId  Int              @map("product_id")
+  identifier String           @db.VarChar(64)
+  name       String           @db.VarChar(100)
+  dataType   PropertyDataType @map("data_type")
+  unit       String           @default("") @db.VarChar(32)
+  category   String           @db.VarChar(32)
+  sort       Int              @default(0)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+  product    Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, identifier])
+  @@index([productId, sort])
+  @@map("product_properties")
+}
+
+model Device {
+  id             Int                 @id @default(autoincrement())
+  productId      Int                 @map("product_id")
+  deviceCode     String              @unique @map("device_code") @db.VarChar(64)
+  name           String              @db.VarChar(100)
+  pumpType       PumpType            @map("pump_type")
+  status         DeviceStatus        @default(ENABLED)
+  lastReportedAt DateTime?           @map("last_reported_at")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  deletedAt      DateTime?           @map("deleted_at")
+  product        Product             @relation(fields: [productId], references: [id], onDelete: Restrict)
+  reports        TelemetryReport[]
+  latestValues   DeviceLatestValue[]
+  alarms         Alarm[]
+
+  @@index([productId, status])
+  @@index([lastReportedAt])
+  @@index([deletedAt])
+  @@map("devices")
+}

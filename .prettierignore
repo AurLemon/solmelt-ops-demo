@@ -1,0 +1,7 @@
+.nuxt
+.output
+generated
+node_modules
+.requirements
+.team
+pnpm-lock.yaml

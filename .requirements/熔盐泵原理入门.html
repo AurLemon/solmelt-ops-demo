@@ -1,0 +1,1724 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>熔盐泵原理入门</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A1422;          /* 夜泵黑 */
+  --panel:#13273D;       /* 罐壁钢蓝 */
+  --panel-hi:#1D3654;    /* 钢蓝提亮(描边/悬浮) */
+  --panel-deep:#0D1B2C;  /* 钢蓝压暗(嵌入面板) */
+  --ink:#EDF4FB;         /* 盐雾白 */
+  --ink-66:rgba(237,244,251,.66);
+  --ink-45:rgba(237,244,251,.45);
+  --hot:#FF9D45;         /* 熔盐橙 */
+  --gold:#FFC94D;        /* 储热金 */
+  --cold:#52C8FF;        /* 冷盐冰蓝 */
+  --red:#FF6B6B;         /* 冻线红 */
+  --green:#58D6A9;       /* 健康绿 */
+  --line:rgba(237,244,251,.10);
+  --serif:'Noto Serif SC','Source Han Serif SC','Songti SC',SimSun,serif;
+  --sans:'Noto Sans SC','Source Han Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'JetBrains Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.9;
+  padding:0 24px;-webkit-font-smoothing:antialiased;
+}
+b{color:var(--ink);font-weight:700}
+em{font-style:normal;color:var(--hot)}
+a{color:var(--cold)}
+::selection{background:rgba(255,157,69,.35)}
+/* ---------- 顶部进度条 ---------- */
+#topbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:60;background:transparent}
+#topbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cold),var(--hot));transition:width .15s linear}
+/* ---------- 十幕锚点胶囊(<1280) ---------- */
+#pillbar{
+  position:fixed;top:3px;left:0;right:0;z-index:55;display:flex;gap:6px;
+  padding:8px 16px;overflow-x:auto;background:rgba(10,20,34,.92);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(6px);
+}
+#pillbar a{
+  flex:0 0 auto;font-family:var(--mono);font-size:12px;line-height:1;
+  color:var(--ink-45);text-decoration:none;border:1px solid var(--line);
+  border-radius:999px;padding:6px 11px;transition:.2s;
+}
+#pillbar a.on{color:#081522;background:var(--hot);border-color:var(--hot);font-weight:700}
+#pillbar a.part2.on{background:var(--cold);border-color:var(--cold)}
+/* ---------- 左侧竖排圆点导航(≥1280) ---------- */
+#dotnav{position:fixed;left:calc(50% - 620px);top:50%;transform:translateY(-50%);
+  z-index:50;display:none;flex-direction:column;gap:14px}
+#dotnav a{display:flex;align-items:center;gap:9px;text-decoration:none}
+#dotnav i{width:9px;height:9px;border-radius:50%;background:var(--ink-45);opacity:.55;transition:.25s;flex:0 0 auto}
+#dotnav span{font-family:var(--mono);font-size:11px;color:var(--ink-45);opacity:0;transition:.25s;white-space:nowrap}
+#dotnav a.on i{background:var(--hot);opacity:1;box-shadow:0 0 0 4px rgba(255,157,69,.18)}
+#dotnav a.on span{opacity:1}
+#dotnav a.p2.on i{background:var(--cold);box-shadow:0 0 0 4px rgba(82,200,255,.18)}
+@media (min-width:1280px){
+  #dotnav{display:flex}
+  #pillbar{display:none}
+}
+/* ---------- 版心 ---------- */
+.wrap{max-width:960px;margin:0 auto}
+/* ---------- HERO ---------- */
+.hero{padding:110px 0 56px;text-align:center}
+.hero .kicker{font-family:var(--mono);font-size:13px;letter-spacing:.35em;color:var(--hot);text-transform:uppercase}
+.hero h1{
+  font-family:var(--serif);font-weight:900;font-size:clamp(30px,4.4vw,52px);
+  line-height:1.35;margin:18px 0 10px;
+}
+.hero h1 .sys{color:var(--hot)}
+.hero .sub{color:var(--ink-66);font-size:16px;max-width:640px;margin:0 auto}
+.hero .loop{margin:40px auto 0;display:block;max-width:100%}
+/* ---------- 篇名过渡页 ---------- */
+.part-divider{padding:130px 0 90px;text-align:center}
+.part-divider .pd-no{font-family:var(--mono);font-size:15px;letter-spacing:.5em;color:var(--ink-45)}
+.part-divider h2{font-family:var(--serif);font-weight:900;font-size:clamp(34px,5vw,56px);margin:16px 0 12px}
+.part-divider.p1 .pd-no,.part-divider.p1 h2{color:var(--hot)}
+.part-divider.p2 .pd-no,.part-divider.p2 h2{color:var(--cold)}
+.part-divider p{color:var(--ink-66);max-width:560px;margin:0 auto}
+/* ---------- 幕骨架 ---------- */
+.act{padding:74px 0 30px;border-top:1px solid var(--line)}
+.act-no{display:flex;align-items:baseline;gap:14px;font-family:var(--mono);font-size:13px;letter-spacing:.18em}
+.act-no .n{font-weight:700}
+.act.p1 .act-no .n{color:var(--hot)}
+.act.p2 .act-no .n{color:var(--cold)}
+.act-no .g{color:var(--ink-45);letter-spacing:.28em}
+.act h2{
+  font-family:var(--serif);font-weight:900;font-size:clamp(25px,3.2vw,36px);
+  line-height:1.4;margin:12px 0 26px;
+}
+.act .body p{max-width:620px;margin:0 0 1.1em;color:rgba(237,244,251,.9)}
+/* ---------- 比喻块 ---------- */
+.analogy{
+  position:relative;background:var(--panel);border-left:3px solid var(--hot);
+  border-radius:0 10px 10px 0;padding:20px 24px 16px;margin:26px 0;
+}
+.analogy .tag{
+  position:absolute;top:-11px;left:18px;background:var(--hot);color:#081522;
+  font-size:12px;font-weight:700;letter-spacing:.2em;padding:2px 12px;border-radius:999px;
+}
+.analogy p{color:rgba(237,244,251,.92);font-size:15.5px;margin:0 0 .6em;max-width:640px}
+.analogy p:last-child{margin-bottom:0}
+/* ---------- 金句块 ---------- */
+.remember{
+  border-top:3px solid var(--hot);background:linear-gradient(180deg,rgba(255,157,69,.10),rgba(255,157,69,.02));
+  padding:16px 22px 14px;border-radius:0 0 10px 10px;margin:30px 0;
+}
+.remember .tag{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--hot)}
+.remember p{font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.7;margin-top:6px}
+/* ---------- 工程翻译 ---------- */
+.eng{margin:26px 0 8px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.eng .eng-h{display:flex;gap:10px;align-items:center;padding:10px 18px;background:var(--panel-deep);border-bottom:1px solid var(--line)}
+.eng .eng-h b{font-size:13px;letter-spacing:.22em;color:var(--cold)}
+.eng .eng-h span{font-family:var(--mono);font-size:11px;color:var(--ink-45)}
+.eng-row{display:grid;grid-template-columns:1fr 38px 1.35fr;align-items:center;border-bottom:1px solid var(--line)}
+.eng-row:last-child{border-bottom:0}
+.eng-row>span{padding:9px 18px;font-size:14px}
+.eng-row .l{color:var(--ink-66)}
+.eng-row .m{text-align:center;color:var(--ink-45);font-family:var(--mono);font-size:13px}
+.eng-row .r{font-family:var(--mono);font-size:13px;color:var(--ink)}
+.eng-row .r .dim{color:var(--ink-45)}
+/* ---------- SVG 图 ---------- */
+.fig{margin:34px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig .cap{font-size:13px;color:var(--ink-45);margin-top:10px;line-height:1.7}
+.fig .cap b{color:var(--ink-66)}
+/* SVG 标注字 */
+.svgt{font-family:var(--sans);font-size:13px;fill:var(--ink);font-weight:500}
+.svgt.sm{font-size:12px}
+.svgt.mono{font-family:var(--mono);font-weight:600}
+.svgt.dim{fill:var(--ink-66)}
+.leader{stroke:rgba(237,244,251,.45);stroke-width:1;fill:none}
+.dot{fill:var(--ink-45)}
+/* ---------- 交互面板 ---------- */
+.lab{
+  margin:36px 0 20px;border:1px solid rgba(82,200,255,.28);border-radius:12px;
+  background:linear-gradient(180deg,rgba(82,200,255,.05),rgba(19,39,61,.35));
+  padding:22px 24px 24px;
+}
+.lab>.lab-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-bottom:16px}
+.lab>.lab-h .ic{font-family:var(--mono);font-size:12px;letter-spacing:.25em;color:var(--cold);border:1px solid rgba(82,200,255,.4);border-radius:999px;padding:3px 12px}
+.lab>.lab-h b{font-size:16px}
+.lab>.lab-h span{font-size:13px;color:var(--ink-45)}
+.lab .note{font-size:12.5px;color:var(--ink-45);margin-top:12px;line-height:1.7}
+.ctrl-row{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:14px 0}
+.ctrl-row label{font-size:14px;color:var(--ink-66);flex:0 0 auto}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1 1 180px;min-width:150px;height:4px;border-radius:2px;
+  background:linear-gradient(90deg,var(--cold),var(--hot));outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+  background:#fff;border:3px solid var(--hot);cursor:pointer;box-shadow:0 0 8px rgba(255,157,69,.5);
+}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--hot);cursor:pointer}
+output.mono,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+output.mono{font-size:16px;font-weight:700;color:var(--gold);min-width:5.5em}
+.btn{
+  font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;
+  background:var(--panel-hi);border:1px solid rgba(237,244,251,.22);border-radius:8px;
+  padding:7px 16px;transition:.2s;
+}
+.btn:hover{border-color:var(--hot);color:var(--hot)}
+.btn.primary{background:var(--hot);border-color:var(--hot);color:#081522;font-weight:700}
+.btn.primary:hover{filter:brightness(1.1);color:#081522}
+.btn.cold{border-color:rgba(82,200,255,.5);color:var(--cold)}
+.btn.cold:hover{border-color:var(--cold)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12.5px;
+  border:1px solid var(--line);border-radius:999px;padding:4px 12px;color:var(--ink-66)}
+.chip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.state-chip{display:inline-block;font-size:13px;font-weight:700;border-radius:8px;padding:5px 14px;letter-spacing:.05em}
+.state-chip.ok{background:rgba(88,214,169,.16);color:var(--green);border:1px solid rgba(88,214,169,.5)}
+.state-chip.warn{background:rgba(255,201,77,.14);color:var(--gold);border:1px solid rgba(255,201,77,.5)}
+.state-chip.bad{background:rgba(255,107,107,.14);color:var(--red);border:1px solid rgba(255,107,107,.5)}
+.kv{display:flex;flex-wrap:wrap;gap:10px 26px;font-size:13.5px;color:var(--ink-66)}
+.kv b{font-family:var(--mono);color:var(--gold);font-size:15px}
+/* 幕脚注 */
+.foot-note{font-size:12px;color:var(--ink-45);border-left:2px solid var(--line);padding-left:12px;margin:14px 0 6px;line-height:1.8}
+/* ---------- 页脚 ---------- */
+footer{border-top:1px solid var(--line);margin-top:80px;padding:36px 0 60px;color:var(--ink-45);font-size:13px;line-height:2}
+footer .mono{color:var(--ink-66)}
+/* ---------- 动效降级 ---------- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001s !important;animation-iteration-count:1 !important;transition:none !important}
+}
+@media (max-width:640px){
+  body{padding:0 16px}
+  .eng-row{grid-template-columns:1fr}
+  .eng-row .m{display:none}
+}
+</style>
+<style>
+/* ---------- 幕2 凝固线 ---------- */
+#heatlab .pipe-wrap{background:var(--panel-deep);border:1px solid var(--line);border-radius:10px;padding:6px 6px 0}
+.thermo-scale{position:relative;height:220px;flex:0 0 56px}
+.state-strip{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.state-strip .st{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:5px 12px;color:var(--ink-45)}
+.state-strip .st.on{color:#081522;font-weight:700}
+.state-strip .st.s-ok.on{background:var(--green);border-color:var(--green)}
+.state-strip .st.s-warn.on{background:var(--gold);border-color:var(--gold)}
+.state-strip .st.s-bad.on{background:var(--red);border-color:var(--red)}
+.marginbar{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--red) 0 31%,var(--gold) 31% 62%,var(--green) 62%);position:relative;margin:26px 0 6px}
+.marginbar .cursor{position:absolute;top:-5px;width:3px;height:20px;background:#fff;border-radius:2px;box-shadow:0 0 6px #fff}
+/* ---------- 幕5 相似定律 ---------- */
+.law-bars{display:flex;align-items:flex-end;gap:34px;height:190px;padding:10px 8px 0;border-bottom:1px dashed rgba(237,244,251,.25)}
+.law-bars .lb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.law-bars .col{width:54px;border-radius:6px 6px 0 0;transition:height .25s ease;min-height:4px}
+.law-bars .col.q{background:linear-gradient(180deg,var(--cold),rgba(82,200,255,.25))}
+.law-bars .col.h{background:linear-gradient(180deg,var(--gold),rgba(255,201,77,.25))}
+.law-bars .col.p{background:linear-gradient(180deg,var(--hot),rgba(255,157,69,.25))}
+.law-nums{display:flex;gap:34px;padding:8px 8px 0}
+.law-nums .ln{flex:1;text-align:center;font-family:var(--mono)}
+.law-nums .ln .v{font-size:17px;font-weight:700}
+.law-nums .ln .k{font-size:12px;color:var(--ink-45)}
+.amp-wrap{display:flex;align-items:center;gap:14px;margin-top:16px}
+.amp-wrap .bar{flex:1;height:12px;border-radius:6px;background:var(--panel-deep);overflow:hidden;border:1px solid var(--line)}
+.amp-wrap .bar i{display:block;height:100%;width:0;background:var(--green);transition:width .2s,background .2s}
+/* ---------- 幕6 测点 ---------- */
+.hot-pick .hp{font-family:var(--mono);font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:5px 14px;cursor:pointer;color:var(--ink-45);background:transparent;transition:.2s}
+.hot-pick .hp.on{background:var(--cold);color:#081522;border-color:var(--cold);font-weight:700}
+.hl-dot{cursor:pointer;transition:.2s}
+.hl-dot:focus{outline:none}
+.hl-dot:focus .ring,.hl-dot:hover .ring{stroke:#fff;stroke-width:2}
+.lesion-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px;min-height:170px}
+.lesion-card h4{font-family:var(--serif);font-size:17px;margin-bottom:2px}
+.lesion-card .kk{font-family:var(--mono);font-size:12px;color:var(--cold);letter-spacing:.06em}
+.lesion-card dl{margin-top:10px;font-size:13.5px;overflow:hidden}
+.lesion-card dt{color:var(--ink-45);float:left;width:6.5em}
+.lesion-card dd{margin-left:7.5em;margin-bottom:4px}
+.badge6{display:inline-block;font-family:var(--mono);font-size:11.5px;background:rgba(255,157,69,.15);border:1px solid rgba(255,157,69,.5);color:var(--hot);border-radius:6px;padding:1px 8px;margin:2px}
+/* ---------- 幕7 链路 ---------- */
+.gate-lab{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:12px}
+.ts-card{font-family:var(--mono);background:var(--panel-deep);border:1px solid var(--line);border-radius:10px;padding:12px 18px;font-size:14px}
+.ts-card .t{color:var(--gold);font-weight:700;font-size:17px}
+/* ---------- 幕8 振动 ---------- */
+.chan{display:grid;grid-template-columns:96px 1fr 74px;gap:10px;align-items:center;margin:7px 0}
+.chan .cn{font-family:var(--mono);font-size:12.5px;color:var(--ink-66)}
+.chan output{text-align:right;font-size:13px}
+.alarm-card{background:var(--panel);border:1px solid rgba(255,107,107,.55);border-radius:10px;padding:16px 20px;margin-top:16px}
+.alarm-card.hidden{display:none}
+.alarm-card h4{font-family:var(--serif);color:var(--red);font-size:16px}
+.alarm-card .meta{font-family:var(--mono);font-size:12px;color:var(--ink-66);margin:4px 0 10px}
+.flow-stamps{display:flex;gap:8px;flex-wrap:wrap}
+.stamp{font-family:var(--mono);font-size:12.5px;border:1px dashed rgba(237,244,251,.3);color:var(--ink-45);border-radius:8px;padding:6px 13px;cursor:pointer;background:transparent;transition:.2s}
+.stamp.done{border-style:solid;color:#081522;font-weight:700;cursor:default}
+.stamp.done.s1{background:var(--gold);border-color:var(--gold)}
+.stamp.done.s2{background:var(--green);border-color:var(--green)}
+.stamp.done.s3{background:var(--panel-hi);color:var(--ink);border-color:var(--ink-45)}
+.kb-entry{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;font-size:13px;color:var(--ink-66);display:none}
+.kb-entry.show{display:block}
+.kb-entry b{color:var(--gold)}
+/* ---------- 幕9 健康分 ---------- */
+.dim-row{display:grid;grid-template-columns:150px 1fr 200px 88px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.dim-row .dn{font-size:13.5px}
+.dim-row .dn .th{font-family:var(--mono);font-size:11.5px;color:var(--ink-45)}
+.dim-row output{font-family:var(--mono);font-size:13.5px;color:var(--gold);text-align:right}
+.dim-row .sc{font-family:var(--mono);font-size:15px;font-weight:700;text-align:right}
+.wstack{display:flex;height:16px;border-radius:8px;overflow:hidden;margin:16px 0 8px;background:var(--panel-deep)}
+.wstack i{height:100%;transition:width .3s}
+.score-big{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.score-big .num{font-family:var(--mono);font-size:54px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.score-big .lv{font-size:14px;font-weight:700;border-radius:8px;padding:5px 14px}
+.formula-box{font-family:var(--mono);font-size:12.5px;line-height:2;background:var(--panel-deep);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-top:16px;color:var(--ink-66);overflow-x:auto;white-space:nowrap}
+.formula-box b{color:var(--cold)}
+.mini-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.mini-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mini-card .k{font-size:12px;color:var(--ink-45)}
+.mini-card .v{font-family:var(--mono);font-size:20px;font-weight:700;margin-top:2px}
+@media (max-width:760px){.dim-row{grid-template-columns:1fr;gap:6px}.mini-cards{grid-template-columns:1fr}}
+/* ---------- 幕10 大屏 ---------- */
+.dash{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dash .dcell{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative;transition:.2s;cursor:default}
+.dash .dcell:hover{border-color:var(--hot);background:var(--panel-hi)}
+.dash .dcell .k{font-size:12px;color:var(--ink-45)}
+.dash .dcell .v{font-family:var(--mono);font-size:21px;font-weight:700;margin-top:2px}
+.dash .dcell .v small{font-size:12px;color:var(--ink-45);font-weight:400}
+.dash .dcell .ab{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:10.5px;color:var(--ink-45);border:1px solid var(--line);border-radius:6px;padding:1px 7px;cursor:pointer;transition:.2s;background:transparent}
+.dash .dcell .ab:hover{color:var(--hot);border-color:var(--hot)}
+.dash .dcell.wide{grid-column:span 2}
+.dash .dcell.tall{grid-row:span 2}
+.dash .bars{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.dash .bars .b{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--ink-66)}
+.dash .bars .b i{height:8px;border-radius:4px;display:inline-block}
+.mode-judge{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:12px}
+.tog{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-66);cursor:pointer;user-select:none}
+.tog input{accent-color:var(--hot);width:15px;height:15px}
+.anno{display:none;background:var(--panel-deep);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-top:12px;font-size:13.5px}
+.anno.show{display:block}
+.anno .bi{color:var(--hot)}
+.anno .tm{color:var(--cold);font-family:var(--mono);font-size:12.5px}
+@media (max-width:860px){.dash{grid-template-columns:repeat(2,1fr)}}
+</style>
+<body>
+<div id="topbar"><i></i></div>
+<nav id="pillbar" aria-label="幕导航">
+  <a href="#act1">01充电宝</a><a href="#act2">02怕冷</a><a href="#act3">03剖面</a><a href="#act4">04甩水</a><a href="#act5">05旋钮</a>
+  <a href="#act6" class="part2">06体征</a><a href="#act7" class="part2">07旅程</a><a href="#act8" class="part2">08报警</a><a href="#act9" class="part2">09评分</a><a href="#act10" class="part2">10大屏</a>
+</nav>
+<nav id="dotnav" aria-label="幕导航"></nav>
+
+<header class="hero wrap">
+  <div class="kicker">SALT PUMP · PRIMER 101</div>
+  <h1><span class="sys">光热电站熔盐泵</span>智能运营管理系统<br>——先把「它怎么转、怎么守」讲明白</h1>
+  <p class="sub">十幕短课:上篇拆泵本身(它是什么、怕什么、怎么工作),下篇拆系统(数据怎么走、报警怎么响、健康分怎么算、大屏怎么看)。页面演示读数均为教学示例;五维阈值、权重与分段线性公式与线上引擎一致(凝固线 240°C 为教学值)。</p>
+  <svg class="loop" viewBox="0 0 760 90" aria-hidden="true">
+    <defs>
+      <marker id="ah1" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L6,3.5 L0,7 Z" fill="#52C8FF"/></marker>
+      <marker id="ah2" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L6,3.5 L0,7 Z" fill="#FF9D45"/></marker>
+    </defs>
+    <path id="loopA" d="M60,62 C160,62 180,26 380,26 C580,26 600,62 700,62" fill="none" stroke="#52C8FF" stroke-width="2.5" marker-end="url(#ah1)" opacity=".9"/>
+    <path id="loopB" d="M700,70 C600,70 580,44 380,44 C180,44 160,70 60,70" fill="none" stroke="#FF9D45" stroke-width="2.5" marker-end="url(#ah2)" opacity=".9"/>
+    <g fill="#52C8FF"><circle r="3"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#loopA"/></animateMotion></circle><circle r="2.4"><animateMotion dur="5s" begin="1.6s" repeatCount="indefinite"><mpath href="#loopA"/></animateMotion></circle><circle r="2.4"><animateMotion dur="5s" begin="3.3s" repeatCount="indefinite"><mpath href="#loopA"/></animateMotion></circle></g>
+    <g fill="#FF9D45"><circle r="3"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#loopB"/></animateMotion></circle><circle r="2.4"><animateMotion dur="6s" begin="2s" repeatCount="indefinite"><mpath href="#loopB"/></animateMotion></circle><circle r="2.4"><animateMotion dur="6s" begin="4.1s" repeatCount="indefinite"><mpath href="#loopB"/></animateMotion></circle></g>
+    <circle cx="60" cy="66" r="7" fill="none" stroke="#52C8FF" stroke-width="2"/>
+    <circle cx="700" cy="66" r="7" fill="none" stroke="#FF9D45" stroke-width="2"/>
+  </svg>
+  <p class="foot-note" style="max-width:560px;margin:14px auto 0">冰蓝=冷盐回路(≈290°C) · 橙=热盐回路(≈565°C);粒子的流向,就是后面十幕要讲的故事。</p>
+</header>
+
+<div class="part-divider p1 wrap">
+  <div class="pd-no">PART 1 / 2</div>
+  <h2>上篇 · 熔盐泵本身</h2>
+  <p>五幕:它为什么存在、它怕什么、它长什么样、它怎么把盐甩出去、以及那根最贵的旋钮。</p>
+</div>
+<section class="act p1 wrap" id="act1">
+  <div class="act-no"><span class="n">幕 01 · 上篇</span><span class="g">熔盐泵本身</span></div>
+  <h2>太阳下山了,电厂为什么还在发电?</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>熔盐储热,是一只<b>巨型充电宝</b>:白天,吸热器是充电器,把阳光一格一格充进盐里;夜里,蒸汽发生系统负责放电,推着汽轮机发电。而泵,就是在两格「电池」之间来回搬运热量的搬运工——9 台泵,就是这锅盐的 9 颗心脏。</p>
+  </div>
+  <div class="body">
+    <p>太阳下了山,光热电站的机器却没停——秘密是它先把阳光存了起来。白天,冷罐里<b>290°C</b>的熔盐被泵送上吸热器,晒到<b>565°C</b>存进热罐,这是「充电」;夜里,热盐把热交给蒸汽发生系统去发电,放完热回流冷罐,等明天接着晒。</p>
+    <p>这锅盐自己不会动,搬运全靠泵。9 台泵三种分工:<b>4 台冷盐泵</b>管充热,把冷盐送上吸热器;<b>3 台热盐泵</b>管发电,把热盐送去发汽;<b>2 台调温泵</b>像空调温控,自己不产热,专门把温度微调到位。这 9 台泵,就是这锅盐昼夜跳动的心脏。</p>
+    <p>充电宝剩多少电,看电量条;这锅盐存了多少热,看液位——冷罐<b>4.99 米</b>、热罐<b>8.63 米</b>,就是它的电量读数;大屏上的「<b>储热率</b>」,就是这读数的正式说法。夜里灯还亮,不是太阳没走,是白天存进热罐的那一格,正一格格放出来。</p>
+  </div>
+
+  <div class="fig">
+    <svg viewBox="0 0 960 460" role="img" aria-label="全站熔盐回路示意">
+      <defs>
+        <linearGradient id="gCold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#52C8FF" stop-opacity=".55"/><stop offset="1" stop-color="#52C8FF" stop-opacity=".12"/></linearGradient>
+        <linearGradient id="gHot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF9D45" stop-opacity=".6"/><stop offset="1" stop-color="#FF9D45" stop-opacity=".14"/></linearGradient>
+        <marker id="mC" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L6,3.5 L0,7 Z" fill="#52C8FF"/></marker>
+        <marker id="mH" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L6,3.5 L0,7 Z" fill="#FF9D45"/></marker>
+        <g id="vpump">
+          <rect x="-5" y="-26" width="10" height="16" rx="2" fill="#1D3654" stroke="#EDF4FB" stroke-opacity=".5"/>
+          <rect x="-1.5" y="-10" width="3" height="14" fill="#EDF4FB" fill-opacity=".5"/>
+          <circle r="9" fill="#13273D" stroke-width="2"/>
+          <circle r="3" fill="#EDF4FB" fill-opacity=".8"/>
+        </g>
+        <g id="mirror"><path d="M0,0 L34,-13" stroke="#EDF4FB" stroke-opacity=".55" stroke-width="2.5" stroke-linecap="round"/></g>
+      </defs>
+
+      <!-- 定日镜场 -->
+      <g>
+        <use href="#mirror" x="60" y="132"/><use href="#mirror" x="100" y="140"/><use href="#mirror" x="140" y="132"/>
+        <use href="#mirror" x="70" y="162"/><use href="#mirror" x="112" y="170"/><use href="#mirror" x="152" y="162"/>
+      </g>
+      <path d="M180,150 L348,110" stroke="#FFC94D" stroke-opacity=".5" stroke-width="1.2" stroke-dasharray="3 5"/>
+
+      <!-- 吸热塔 -->
+      <rect x="348" y="66" width="66" height="314" rx="6" fill="#13273D" stroke="#1D3654" stroke-width="1.5"/>
+      <rect x="362" y="86" width="38" height="120" rx="4" fill="none" stroke="#FF9D45" stroke-width="2"/>
+      <g stroke="#FF9D45" stroke-width="1.6" stroke-opacity=".8">
+        <line x1="370" y1="102" x2="392" y2="102"/><line x1="370" y1="120" x2="392" y2="120"/><line x1="370" y1="138" x2="392" y2="138"/><line x1="370" y1="156" x2="392" y2="156"/><line x1="370" y1="174" x2="392" y2="174"/><line x1="370" y1="192" x2="392" y2="192"/>
+      </g>
+
+      <!-- 冷盐罐 -->
+      <path d="M60,222 h110 v158 a10,10 0 0 1 -10,10 h-90 a10,10 0 0 1 -10,-10 Z" fill="#0D1B2C" stroke="#1D3654" stroke-width="1.5"/>
+      <path d="M66,258 h98 v120 a8,8 0 0 1 -8,8 h-82 a8,8 0 0 1 -8,-8 Z" fill="url(#gCold)" stroke="#52C8FF" stroke-opacity=".65"/>
+      <!-- 热盐罐 -->
+      <path d="M492,206 h110 v174 a10,10 0 0 1 -10,10 h-90 a10,10 0 0 1 -10,-10 Z" fill="#0D1B2C" stroke="#1D3654" stroke-width="1.5"/>
+      <path d="M498,228 h98 v140 a8,8 0 0 1 -8,8 h-82 a8,8 0 0 1 -8,-8 Z" fill="url(#gHot)" stroke="#FF9D45" stroke-opacity=".65"/>
+
+      <!-- 蒸汽发生系统 + 汽轮机符号 -->
+      <rect x="742" y="230" width="112" height="96" rx="10" fill="#13273D" stroke="#1D3654" stroke-width="1.5"/>
+      <circle cx="798" cy="278" r="26" fill="none" stroke="#EDF4FB" stroke-opacity=".7" stroke-width="2"/>
+      <path d="M798,278 L798,254 A24,24 0 0 1 819,266 Z" fill="#FF9D45" fill-opacity=".85"/>
+      <path d="M798,278 L798,302 A24,24 0 0 1 777,290 Z" fill="#52C8FF" fill-opacity=".85"/>
+      <g stroke="#EDF4FB" stroke-opacity=".55" stroke-width="2"><line x1="770" y1="216" x2="770" y2="196"/><line x1="798" y1="212" x2="798" y2="188"/><line x1="826" y1="216" x2="826" y2="196"/></g>
+
+      <!-- 管线 -->
+      <path id="pth-cold" d="M170,300 C232,300 260,236 348,196" fill="none" stroke="#52C8FF" stroke-width="3" marker-end="url(#mC)" opacity=".9"/>
+      <path id="pth-hotup" d="M414,120 C446,132 462,196 492,242" fill="none" stroke="#FF9D45" stroke-width="3" marker-end="url(#mH)" opacity=".9"/>
+      <path id="pth-hot" d="M602,296 C636,296 668,290 742,278" fill="none" stroke="#FF9D45" stroke-width="3" marker-end="url(#mH)" opacity=".9"/>
+      <path id="pth-ret" d="M832,326 C832,392 760,416 400,416 C160,416 115,400 115,390" fill="none" stroke="#EDF4FB" stroke-opacity=".35" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#mC)"/>
+
+      <!-- 泵组 -->
+      <g stroke="#52C8FF"><use href="#vpump" x="236" y="252"/><use href="#vpump" x="236" y="330"/></g>
+      <g stroke="#FF9D45"><use href="#vpump" x="666" y="238"/><use href="#vpump" x="666" y="286"/><use href="#vpump" x="666" y="334"/></g>
+
+      <!-- 粒子 -->
+      <g fill="#52C8FF"><circle r="3.4"><animateMotion dur="4.2s" repeatCount="indefinite"><mpath href="#pth-cold"/></animateMotion></circle><circle r="2.6"><animateMotion dur="4.2s" begin="1.4s" repeatCount="indefinite"><mpath href="#pth-cold"/></animateMotion></circle><circle r="2.6"><animateMotion dur="4.2s" begin="2.8s" repeatCount="indefinite"><mpath href="#pth-cold"/></animateMotion></circle></g>
+      <g fill="#FF9D45"><circle r="3.4"><animateMotion dur="4.6s" repeatCount="indefinite"><mpath href="#pth-hotup"/></animateMotion></circle><circle r="2.6"><animateMotion dur="4.6s" begin="2s" repeatCount="indefinite"><mpath href="#pth-hotup"/></animateMotion></circle></g>
+      <g fill="#FF9D45"><circle r="3.4"><animateMotion dur="4.4s" repeatCount="indefinite"><mpath href="#pth-hot"/></animateMotion></circle><circle r="2.6"><animateMotion dur="4.4s" begin="1.5s" repeatCount="indefinite"><mpath href="#pth-hot"/></animateMotion></circle><circle r="2.6"><animateMotion dur="4.4s" begin="3s" repeatCount="indefinite"><mpath href="#pth-hot"/></animateMotion></circle></g>
+
+      <!-- 引出线标注:左侧 -->
+      <g>
+        <circle class="dot" cx="152" cy="150" r="3"/><polyline class="leader" points="152,150 108,112 44,112"/>
+        <text class="svgt" x="40" y="108" text-anchor="start">定日镜场</text>
+        <circle class="dot" cx="362" cy="92" r="3"/><polyline class="leader" points="362,92 300,60 200,60"/>
+        <text class="svgt" x="196" y="56" text-anchor="end">吸热器</text>
+        <text class="svgt mono" x="196" y="74" text-anchor="end" fill="#FF9D45">565°C</text>
+        <circle class="dot" cx="76" cy="266" r="3"/><polyline class="leader" points="76,266 44,266"/>
+        <text class="svgt" x="40" y="262" text-anchor="start">冷盐罐</text>
+        <text class="svgt mono" x="40" y="280" text-anchor="start" fill="#52C8FF">290°C</text>
+        <text class="svgt sm dim" x="40" y="298" text-anchor="start">液位 4.99 m</text>
+        <circle class="dot" cx="236" cy="252" r="3"/><polyline class="leader" points="236,252 196,236 168,236"/>
+        <text class="svgt sm" x="164" y="232" text-anchor="end">冷盐泵 ×2(示意,实装 4)</text>
+      </g>
+      <!-- 引出线标注:右侧 -->
+      <g>
+        <circle class="dot" cx="592" cy="236" r="3"/><polyline class="leader" points="592,236 628,196 664,196" opacity="0"/>
+        <circle class="dot" cx="512" cy="236" r="3"/><polyline class="leader" points="512,236 470,196 440,196" opacity="0"/>
+        <circle class="dot" cx="602" cy="236" r="3"/><polyline class="leader" points="602,236 648,206 700,206"/>
+        <text class="svgt" x="704" y="202" text-anchor="start">热盐罐</text>
+        <text class="svgt mono" x="704" y="220" text-anchor="start" fill="#FF9D45">565°C</text>
+        <text class="svgt sm dim" x="704" y="238" text-anchor="start">液位 8.63 m</text>
+        <circle class="dot" cx="666" cy="286" r="3"/><polyline class="leader" points="666,286 712,318 736,318"/>
+        <text class="svgt sm" x="740" y="322" text-anchor="start">热盐泵 ×3</text>
+        <circle class="dot" cx="854" cy="244" r="3"/><polyline class="leader" points="854,244 892,216 920,216"/>
+        <text class="svgt" x="924" y="212" text-anchor="end">蒸汽发生系统</text>
+        <text class="svgt sm dim" x="924" y="230" text-anchor="end">产汽→发电</text>
+        <circle class="dot" cx="832" cy="380" r="3"/><polyline class="leader" points="832,380 886,396 920,396"/>
+        <text class="svgt sm dim" x="924" y="392" text-anchor="end">放热后回流冷罐</text>
+      </g>
+    </svg>
+    <p class="cap"><b>读图:</b>冰蓝实线=冷盐回路(充热),橙实线=热盐回路(存热/放热),灰虚线=回流;三组泵就是三段管路的心脏,粒子的速度就是流量的体感。</p>
+  </div>
+
+  <div class="fig">
+    <svg viewBox="0 0 960 130" role="img" aria-label="九台泵位号分组">
+      <g stroke="#52C8FF" stroke-width="2"><use href="#vpump" x="120" y="52"/><use href="#vpump" x="200" y="52"/><use href="#vpump" x="280" y="52"/><use href="#vpump" x="360" y="52"/></g>
+      <g stroke="#FFC94D" stroke-width="2"><use href="#vpump" x="470" y="52"/><use href="#vpump" x="550" y="52"/></g>
+      <g stroke="#FF9D45" stroke-width="2"><use href="#vpump" x="650" y="52"/><use href="#vpump" x="730" y="52"/><use href="#vpump" x="810" y="52"/></g>
+      <path d="M96,86 h288" stroke="#52C8FF" stroke-opacity=".6" fill="none"/>
+      <text class="svgt mono" x="240" y="106" text-anchor="middle" fill="#52C8FF">20WSC10AP010 ~ 040 · 冷盐泵×4</text>
+      <path d="M446,86 h128" stroke="#FFC94D" stroke-opacity=".6" fill="none"/>
+      <text class="svgt mono" x="510" y="106" text-anchor="middle" fill="#FFC94D">20WSC10AP050/060 · 调温×2</text>
+      <path d="M626,86 h208" stroke="#FF9D45" stroke-opacity=".6" fill="none"/>
+      <text class="svgt mono" x="730" y="106" text-anchor="middle" fill="#FF9D45">20WSH20AP010~030 · 热盐×3</text>
+    </svg>
+    <p class="cap">9 台泵的位号地图。注意:调温泵和冷盐泵<b>共享 20WSC10AP0 前缀</b>——判泵型必须看到段位,下面当场练。</p>
+  </div>
+
+  <div class="lab" id="typelab">
+    <div class="lab-h"><span class="ic">INTERACTIVE</span><b>泵型判别器</b><span>输入或点选一个位号</span></div>
+    <div class="ctrl-row">
+      <input type="text" id="kksIn" class="mono" list="kksList" placeholder="如 20WSC10AP010" style="flex:1 1 220px;background:var(--panel-deep);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px 14px;font-size:15px" aria-label="输入KKS位号">
+      <datalist id="kksList">
+        <option value="20WSC10AP010"></option><option value="20WSC10AP020"></option><option value="20WSC10AP030"></option><option value="20WSC10AP040"></option>
+        <option value="20WSC10AP050"></option><option value="20WSC10AP060"></option>
+        <option value="20WSH20AP010"></option><option value="20WSH20AP020"></option><option value="20WSH20AP030"></option>
+      </datalist>
+      <button class="btn primary" id="kksGo">判定</button>
+      <button class="btn" id="kksTrap">反例:20WSC10AP050</button>
+    </div>
+    <div class="lesion-card" id="kksCard" style="min-height:auto">
+      <h4 id="kksTitle">等一个位号</h4>
+      <div class="kk" id="kksEcho">KKS —</div>
+      <dl>
+        <dt>泵型</dt><dd id="kksType">—</dd>
+        <dt>职责</dt><dd id="kksDuty">—</dd>
+        <dt>定子参数</dt><dd id="kksStator">—</dd>
+      </dl>
+    </div>
+    <p class="note">判定规则只有一条:<b>看段位,不看前缀</b>——01x~04x 是冷盐泵,05x/06x 是调温泵(和冷盐泵同前缀!),WSH20 段是热盐泵。平台的泵型分支、定子参数个数,全部从这里分岔。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>熔盐是阳光的充电宝,9 台泵是让热量按时上下班的心脏。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「几台泵在转?」</span><span class="m">↔</span><span class="r">大屏「运行/总数」(分泵型 4+2+3)</span></div>
+    <div class="eng-row"><span class="l">「热罐满没满?」</span><span class="m">↔</span><span class="r">「储热率」</span></div>
+    <div class="eng-row"><span class="l">「这台泵叫啥?」</span><span class="m">↔</span><span class="r">KKS 位号 <span class="dim">(判泵型须看段位)</span></span></div>
+  </div>
+</section>
+<section class="act p1 wrap" id="act2">
+  <div class="act-no"><span class="n">幕 02 · 上篇</span><span class="g">熔盐泵本身</span></div>
+  <h2>熔盐什么都不怕,就怕冷</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>熔盐像一罐猪油:热时清亮流动,一冷就整罐发白冻住。家里那罐猪油冻了,可以搁着等开春;电站的管道冻了,几十吨盐就在管子里原地凝成固体。</p>
+  </div>
+  <div class="body">
+    <p>熔盐不是不结冰,只是冰点高得吓人:凝固线约 240°C(教学值),而冷罐正常才 290°C——满打满算只剩<b>50°C 裕量</b>。这 50 度是全电站<em>最窄的安全走道</em>:别的参数掉一点叫波动,温度跌破这条线就叫事故。</p>
+    <p>盐一凝,遭殃的是整条链路:管道、泵体冻成一体,几十吨盐纹丝不动,一次冻凝足以锁死一台泵。更险的是它会滚雪球——泵一停,盐不流动,热量只出不进,越停越冷,一路滑向冻线。</p>
+    <p>所以大屏的运行模式把<b>「冻凝风险」</b>排在队首,压过双工、充热中、放热中、待机——别的状态都可以等下一拍,唯独这一条一亮,整个电站就得立刻动起来。</p>
+  </div>
+
+  <div class="lab" id="heatlab">
+    <div class="lab-h"><span class="ic">INTERACTIVE</span><b>凝固线温度滑块</b><span>拖动母管温度,看盐的三个阶段</span></div>
+    <div class="pipe-wrap">
+      <svg viewBox="0 0 960 250" id="pipeSvg" role="img" aria-label="管道剖面与凝固阶段">
+        <defs>
+          <marker id="mT" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L6,3.5 L0,7 Z" fill="#FF6B6B"/></marker>
+          <path id="pipePath" d="M150,150 L810,150" fill="none"/>
+          <g id="vpump2">
+            <rect x="-6" y="-30" width="12" height="18" rx="2" fill="#1D3654" stroke="#EDF4FB" stroke-opacity=".5"/>
+            <rect x="-2" y="-12" width="4" height="16" fill="#EDF4FB" fill-opacity=".5"/>
+            <circle r="11" fill="#13273D" stroke-width="2"/>
+          </g>
+        </defs>
+        <!-- 竖直温度标尺 -->
+        <g>
+          <line x1="86" y1="104" x2="86" y2="243" stroke="rgba(237,244,251,.25)" stroke-width="2"/>
+          <line x1="86" y1="208" x2="86" y2="243" stroke="#58D6A9" stroke-width="6" stroke-opacity=".85"/>
+          <line x1="80" y1="150" x2="92" y2="150" stroke="#FF6B6B" stroke-width="3"/>
+          <circle id="tCursor" cx="86" cy="66" r="6" fill="#FFC94D" stroke="#0A1422" stroke-width="2"/>
+          <text class="svgt mono" x="76" y="154" text-anchor="end" fill="#FF6B6B">240 冻线</text>
+          <text class="svgt mono sm" x="76" y="216" text-anchor="end" fill="#58D6A9">290 绿区</text>
+        </g>
+        <!-- 管道 -->
+        <rect x="140" y="120" width="680" height="60" rx="14" fill="#0D1B2C" stroke="#1D3654" stroke-width="2"/>
+        <rect id="saltFill" x="144" y="124" width="672" height="52" rx="11" fill="#52C8FF" fill-opacity=".28"/>
+        <rect id="iceBar" x="340" y="124" width="280" height="52" rx="11" fill="#EDF4FB" fill-opacity="0"/>
+        <g id="crysts" fill="#EDF4FB" fill-opacity="0">
+          <circle cx="200" cy="126" r="4"/><circle cx="260" cy="174" r="5"/><circle cx="330" cy="125" r="3.6"/><circle cx="420" cy="175" r="4.6"/><circle cx="500" cy="126" r="3.2"/><circle cx="580" cy="173" r="5"/><circle cx="660" cy="126" r="4"/><circle cx="730" cy="174" r="3.6"/>
+        </g>
+        <!-- 流动粒子(快/慢两组,按状态显隐) -->
+        <g id="pFast" fill="#FFC94D"><circle r="4"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle><circle r="3"><animateMotion dur="2.6s" begin="0.9s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle><circle r="3"><animateMotion dur="2.6s" begin="1.8s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle></g>
+        <g id="pSlow" fill="#FFC94D" fill-opacity=".7"><circle r="3.6"><animateMotion dur="9s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle><circle r="2.8"><animateMotion dur="9s" begin="3s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle><circle r="2.8"><animateMotion dur="9s" begin="6s" repeatCount="indefinite"><mpath href="#pipePath"/></animateMotion></circle></g>
+        <!-- 泵叶轮(随冻结停转结霜) -->
+        <g transform="translate(880,150)">
+          <use href="#vpump2" stroke="#52C8FF"/>
+          <g id="pumpRot" style="transform-origin:0px 4px;animation:spin 2.2s linear infinite">
+            <path d="M0,4 C-9,2 -9,-8 -2,-9 L0,-4 Z" fill="#52C8FF" fill-opacity=".85"/>
+            <path d="M0,4 C9,6 8,15 1,15 L0,9 Z" fill="#52C8FF" fill-opacity=".85" transform="rotate(120)"/>
+            <path d="M0,4 C-8,10 -16,6 -14,-1 L-8,0 Z" fill="#52C8FF" fill-opacity=".85" transform="rotate(240)"/>
+          </g>
+          <g id="pumpFrost" stroke="#EDF4FB" stroke-width="1.6" stroke-linecap="round" opacity="0">
+            <line x1="-8" y1="-14" x2="-8" y2="-6"/><line x1="-12" y1="-10" x2="-4" y2="-10"/>
+            <line x1="8" y1="12" x2="8" y2="20"/><line x1="4" y1="16" x2="12" y2="16"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <div class="ctrl-row">
+      <label for="tmp">母管温度</label>
+      <input type="range" id="tmp" min="200" max="320" value="290" step="1">
+      <output id="tmpOut" class="mono">290°C</output>
+      <span class="state-chip ok" id="tState">流动 · 全速</span>
+    </div>
+    <div class="state-strip" aria-hidden="true">
+      <span class="st s-ok on" id="stOk">T&gt;270 流动</span>
+      <span class="st s-warn" id="stWarn">240~270 糊化减速</span>
+      <span class="st s-bad" id="stBad">T≤240 冻凝</span>
+    </div>
+    <div class="marginbar"><span class="cursor" id="mCur" style="left:100%"></span></div>
+    <div class="kv"><span>常驻余量</span><b>290 − 240 = 50°C</b><span id="tMargin" class="mono">距冻线 +50°C</span></div>
+    <p class="note">流速=f(T):270°C 以上全速;240~270°C 减速、管壁析出白色晶核;跌破 240°C 粒子冻结、截面从全通到糊状再到堵死,右侧叶轮同步结霜停转。运行模式优先级梯见右下——「冻凝风险」永远排第一。</p>
+    <svg viewBox="0 0 960 96" role="img" aria-label="运行模式优先级梯" style="margin-top:10px">
+      <rect x="40" y="12" width="180" height="30" rx="8" fill="rgba(255,107,107,.2)" stroke="#FF6B6B" stroke-width="2"/>
+      <text class="svgt mono" x="130" y="32" text-anchor="middle" fill="#FF6B6B">冻凝风险 · 队首</text>
+      <rect x="252" y="12" width="130" height="30" rx="8" fill="rgba(255,201,77,.12)" stroke="rgba(255,201,77,.55)"/>
+      <text class="svgt mono sm" x="317" y="32" text-anchor="middle" fill="#FFC94D">双工</text>
+      <rect x="414" y="12" width="130" height="30" rx="8" fill="rgba(255,157,69,.10)" stroke="rgba(255,157,69,.45)"/>
+      <text class="svgt mono sm" x="479" y="32" text-anchor="middle" fill="#FF9D45">充热中</text>
+      <rect x="576" y="12" width="130" height="30" rx="8" fill="rgba(82,200,255,.10)" stroke="rgba(82,200,255,.4)"/>
+      <text class="svgt mono sm" x="641" y="32" text-anchor="middle" fill="#52C8FF">放热中</text>
+      <rect x="738" y="12" width="130" height="30" rx="8" fill="rgba(237,244,251,.05)" stroke="rgba(237,244,251,.25)"/>
+      <text class="svgt mono sm" x="803" y="32" text-anchor="middle" fill="rgba(237,244,251,.66)">待机</text>
+      <path d="M56,58 L880,58" stroke="rgba(237,244,251,.2)" stroke-dasharray="3 6"/>
+      <text class="svgt sm dim" x="56" y="82">优先级自左向右递减——幕 10 的大屏运行模式卡,就是按这条队列判出来的。</text>
+    </svg>
+    <p class="foot-note">角注:凝固线约 240°C 为教学值,用于讲清量级与裕量概念。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>290 是体温,240 是冰点,中间 50 度是全电站最窄的安全走道。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「盐冻了 / 冻管了」</span><span class="m">↔</span><span class="r">运行模式「冻凝风险」<span class="dim">(优先级第一位)</span></span></div>
+    <div class="eng-row"><span class="l">「盐现在多少度?」</span><span class="m">↔</span><span class="r">母管温度 / 罐温测点</span></div>
+  </div>
+</section>
+<section class="act p1 wrap" id="act3">
+  <div class="act-no"><span class="n">幕 03 · 上篇</span><span class="g">熔盐泵本身</span></div>
+  <h2>电机在罐口乘凉,叶轮在罐底泡澡</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>与其用吸管把锅里的汤吸上来——吸空一口就尴尬——不如拿长柄汤勺直接伸到锅底舀。<em>立式液下泵,就是那把永远够得着盐的勺子。</em></p>
+  </div>
+  <div class="body">
+    <p>它的学名叫<b>立式液下离心泵</b>:电机和推力轴承箱坐在罐口的常温区,不挨盐烤,只出力;真正干活的叶轮,由<b>多段长轴</b>垂直吊进罐里,整颗浸没在熔盐液面之下。</p>
+    <p>叶轮整颗泡在盐里,这叫<b>自灌式</b>。普通离心泵最怕吸空——泵壳里混进空气,吸不上液,白转——在这里压根不会发生,启动也不用先灌泵。幕 2 说熔盐怕冷,结构答案就在这:盐,永远够得着。</p>
+    <p>被甩起的盐也不乱溅:它沿柱管与轴之间的<b>环隙</b>——那圈窄窄的夹层通道——安静上升,由水平穿透罐壁的<b>出口管</b>引出,像汤顺着长柄勺的柄流出去。</p>
+  </div>
+
+  <div class="fig">
+    <svg id="pumpX" viewBox="0 0 960 560" role="img" aria-label="立式液下熔盐泵工程剖面">
+      <defs>
+        <linearGradient id="gSalt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF9D45" stop-opacity=".5"/><stop offset="1" stop-color="#FF9D45" stop-opacity=".16"/></linearGradient>
+        <clipPath id="saltClip"><path d="M326,210 h308 v318 a8,8 0 0 1 -8,8 h-292 a8,8 0 0 1 -8,-8 Z"/></clipPath>
+      </defs>
+      <!-- 罐体 -->
+      <path d="M326,150 v378 a8,8 0 0 0 8,8 h292 a8,8 0 0 0 8,-8 v-378" fill="#0D1B2C" stroke="#1D3654" stroke-width="3"/>
+      <rect x="326" y="150" width="308" height="14" fill="#1D3654"/>
+      <g clip-path="url(#saltClip)">
+        <rect x="326" y="210" width="308" height="346" fill="url(#gSalt)"/>
+        <line x1="326" y1="210" x2="634" y2="210" stroke="#FF9D45" stroke-width="2.5" stroke-dasharray="10 6"/>
+      </g>
+      <path d="M326,150 v378 a8,8 0 0 0 8,8 h292 a8,8 0 0 0 8,-8 v-378" fill="none" stroke="#1D3654" stroke-width="3"/>
+      <!-- 电机筒体 -->
+      <rect x="438" y="34" width="84" height="76" rx="10" fill="#1D3654" stroke="#EDF4FB" stroke-opacity=".35" stroke-width="1.5"/>
+      <g stroke="#EDF4FB" stroke-opacity=".25" stroke-width="2"><line x1="446" y1="46" x2="446" y2="98"/><line x1="458" y1="46" x2="458" y2="98"/><line x1="470" y1="46" x2="470" y2="98"/><line x1="482" y1="46" x2="482" y2="98"/><line x1="494" y1="46" x2="494" y2="98"/><line x1="506" y1="46" x2="506" y2="98"/></g>
+      <!-- 推力轴承箱 -->
+      <rect x="428" y="110" width="104" height="34" rx="6" fill="#13273D" stroke="#EDF4FB" stroke-opacity=".45" stroke-width="1.5"/>
+      <circle cx="480" cy="127" r="7" fill="none" stroke="#FFC94D" stroke-width="2"/>
+      <!-- 罐口支撑板 -->
+      <rect x="318" y="144" width="324" height="12" fill="#1D3654" stroke="#EDF4FB" stroke-opacity=".3"/>
+      <!-- 柱管双壁 -->
+      <rect x="440" y="156" width="8" height="272" fill="#13273D" stroke="#EDF4FB" stroke-opacity=".4"/>
+      <rect x="512" y="156" width="8" height="272" fill="#13273D" stroke="#EDF4FB" stroke-opacity=".4"/>
+      <!-- 环隙上升流(静帧箭头) -->
+      <g stroke="#FF9D45" stroke-width="2" fill="none" stroke-linecap="round" opacity=".85">
+        <path d="M494,360 l5,-8 5,8"/><path d="M494,310 l5,-8 5,8"/><path d="M494,258 l5,-8 5,8"/><path d="M494,206 l5,-8 5,8"/>
+      </g>
+      <!-- 多段长轴 + 分段接头 -->
+      <rect x="475" y="144" width="10" height="318" fill="#EDF4FB" fill-opacity=".55"/>
+      <g fill="#EDF4FB" fill-opacity=".8"><rect x="471" y="222" width="18" height="14" rx="3"/><rect x="471" y="316" width="18" height="14" rx="3"/><rect x="471" y="402" width="18" height="14" rx="3"/></g>
+      <!-- 出口管穿透罐壁 -->
+      <rect x="512" y="288" width="196" height="28" rx="4" fill="#13273D" stroke="#EDF4FB" stroke-opacity=".45" stroke-width="1.5"/>
+      <path d="M700,294 l16,8 -16,8 Z" fill="#FF9D45"/>
+      <!-- 叶轮(曲面叶片,旋转) -->
+      <g id="impG"><g class="spin" style="transform-origin:480px 480px">
+        <path d="M480,480 C462,470 458,448 472,438 L482,462 Z" fill="#FF9D45" fill-opacity=".9"/>
+        <path d="M480,480 C498,490 502,512 488,522 L478,498 Z" fill="#FF9D45" fill-opacity=".9"/>
+        <path d="M480,480 C470,498 448,502 438,488 L462,478 Z" fill="#FF9D45" fill-opacity=".9"/>
+        <path d="M480,480 C490,462 512,458 522,472 L498,482 Z" fill="#FF9D45" fill-opacity=".9"/>
+        <circle cx="480" cy="480" r="13" fill="#1D3654" stroke="#FFC94D" stroke-width="2"/>
+      </g></g>
+      <path d="M430,532 h100" stroke="#1D3654" stroke-width="4"/>
+
+      <!-- 左侧引出线 -->
+      <g>
+        <circle class="dot" cx="438" cy="72" r="3"/><polyline class="leader" points="438,72 300,56 250,56"/>
+        <text class="svgt" x="246" y="52" text-anchor="end">电机筒体</text>
+        <text class="svgt sm dim" x="246" y="70" text-anchor="end">常温区 · 只出力不挨烤</text>
+        <circle class="dot" cx="428" cy="127" r="3"/><polyline class="leader" points="428,127 300,120 250,120"/>
+        <text class="svgt" x="246" y="116" text-anchor="end">推力轴承箱</text>
+        <circle class="dot" cx="322" cy="150" r="3"/><polyline class="leader" points="322,150 300,150 250,178"/>
+        <text class="svgt" x="246" y="182" text-anchor="end">罐口支撑板</text>
+        <circle class="dot" cx="476" cy="229" r="3"/><polyline class="leader" points="476,229 300,246 250,246"/>
+        <text class="svgt" x="246" y="242" text-anchor="end">多段长轴</text>
+        <text class="svgt sm dim" x="246" y="260" text-anchor="end">分段接头可见</text>
+        <circle class="dot" cx="444" cy="300" r="3"/><polyline class="leader" points="444,300 300,312 250,312"/>
+        <text class="svgt" x="246" y="308" text-anchor="end">柱管(双壁)</text>
+        <circle class="dot" cx="452" cy="486" r="3"/><polyline class="leader" points="452,486 300,486 250,486"/>
+        <text class="svgt" x="246" y="482" text-anchor="end">叶轮 · 曲面叶片</text>
+        <text class="svgt sm dim" x="246" y="500" text-anchor="end">整颗浸没 · 自灌式</text>
+      </g>
+      <!-- 右侧引出线 -->
+      <g>
+        <circle class="dot" cx="630" cy="210" r="3"/><polyline class="leader" points="630,210 700,176 930,176"/>
+        <text class="svgt" x="934" y="172" text-anchor="end">熔盐液位</text>
+        <text class="svgt sm dim" x="934" y="190" text-anchor="end">叶轮始终在液面下</text>
+        <circle class="dot" cx="512" cy="200" r="3" opacity="0"/>
+        <circle class="dot" cx="516" cy="352" r="3"/><polyline class="leader" points="516,352 720,352 930,340"/>
+        <text class="svgt" x="934" y="336" text-anchor="end">环隙流道 · 盐在此上升</text>
+        <circle class="dot" cx="696" cy="302" r="3"/><polyline class="leader" points="696,302 760,268 930,262"/>
+        <text class="svgt" x="934" y="258" text-anchor="end">出口管 · 穿透罐壁</text>
+        <circle class="dot" cx="634" cy="470" r="3"/><polyline class="leader" points="634,470 720,470 930,452"/>
+        <text class="svgt" x="934" y="448" text-anchor="end">罐体(剖切)</text>
+        <text class="svgt sm dim" x="934" y="466" text-anchor="end">内充熔盐</text>
+      </g>
+    </svg>
+    <p class="cap"><b>读图:</b>自上而下——电机、推力轴承箱、支撑板、长轴、柱管、叶轮;盐被叶轮甩起后沿环隙(中部橙色小箭头)爬升,从右侧出口管离开罐体。幕 6 会在这张图上叠上它的体征光斑(教学示意,冷盐泵 28 个常用点)。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>泵不长在泵房里,长在罐里:电机晒不着,叶轮渴不着。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「吊在罐里那根长杆」</span><span class="m">↔</span><span class="r">立式液下离心泵</span></div>
+    <div class="eng-row"><span class="l">「不会吸空」</span><span class="m">↔</span><span class="r">自灌式<span class="dim">(叶轮浸没、无需灌泵)</span></span></div>
+    <div class="eng-row"><span class="l">「罐口那坨铁」</span><span class="m">↔</span><span class="r">电机+推力轴承箱<span class="dim">(推力轴承X/Y测点在此)</span></span></div>
+    <div class="eng-row"><span class="l">「电机温度」</span><span class="m">↔</span><span class="r">定子线圈温度<span class="dim">(量的是电机,不是泵体)</span></span></div>
+  </div>
+</section>
+<section class="act p1 wrap" id="act4">
+  <div class="act-no"><span class="n">幕 04 · 上篇</span><span class="g">熔盐泵本身</span></div>
+  <h2>叶轮一转,熔盐就被甩出去了</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>雨天转伞:手腕一抖,伞面转起来,水珠不往下滴,而是沿伞边<b>切线</b>「嗖」地飞出——伞中心反而<b>空</b>了一圈。离心泵的叶轮就是这把伞:盐被甩向外缘,中心一空,上面的盐立刻补下来。</p>
+  </div>
+  <div class="body">
+    <p>叶轮在罐底一转,就是那把伞的瞬间:<b>甩</b>——叶片把熔盐贴着甩向外缘,中心一空,压力立刻低于上方,上面的熔盐便源源不断补下来。这一甩一补,吸入就自动连续了,不需要谁去「抽」。</p>
+    <p>被甩出去的盐带着很高的速度,直接送走太浪费——叶轮外圈的<b>导流流道</b>把它接住:流道越走越宽,盐流慢下来,速度就换成了压力。这就是<b>接</b>——动能变压能,一段渐宽的流道悄悄完成。</p>
+    <p>有了压力,熔盐就<b>送</b>出去了:顶着盐沿柱管环隙一路向上,爬出罐口。伞面越大、转得越快,水珠甩得越远;泵能甩多猛,也全看下一幕那根唯一的旋钮——<em>转速</em>。</p>
+  </div>
+
+  <div class="fig">
+    <svg viewBox="0 0 960 340" role="img" aria-label="转伞与叶轮甩水对照">
+      <!-- 转伞俯视 -->
+      <g>
+        <circle cx="170" cy="180" r="86" fill="#13273D" stroke="#EDF4FB" stroke-opacity=".5" stroke-width="2"/>
+        <g stroke="#EDF4FB" stroke-opacity=".3" stroke-width="2"><line x1="170" y1="180" x2="170" y2="98"/><line x1="170" y1="180" x2="245" y2="140"/><line x1="170" y1="180" x2="245" y2="222"/><line x1="170" y1="180" x2="170" y2="262"/><line x1="170" y1="180" x2="95" y2="222"/><line x1="170" y1="180" x2="95" y2="140"/></g>
+        <circle cx="170" cy="180" r="9" fill="#52C8FF"/>
+        <g stroke="#52C8FF" stroke-width="2" fill="none" opacity=".85">
+          <path d="M242,148 q26,-6 44,-22"/><path d="M252,196 q28,4 50,-2"/><path d="M212,254 q18,22 20,44"/><path d="M120,250 q-14,24 -10,46"/><path d="M88,160 q-24,-10 -30,-30"/>
+        </g>
+        <g fill="#52C8FF"><circle cx="292" cy="122" r="4"/><circle cx="306" cy="196" r="4"/><circle cx="234" cy="302" r="4"/><circle cx="108" cy="300" r="4"/><circle cx="54" cy="126" r="4"/></g>
+        <circle class="dot" cx="120" cy="112" r="3"/><polyline class="leader" points="120,112 80,76 30,76"/>
+        <text class="svgt" x="26" y="72" text-anchor="start">转伞:水珠沿切线甩出</text>
+        <circle class="dot" cx="170" cy="266" r="3"/><polyline class="leader" points="170,266 170,312 60,312"/>
+        <text class="svgt sm" x="56" y="308" text-anchor="start">伞中心「空」了=中心低压</text>
+      </g>
+      <path d="M330,180 L370,180" stroke="rgba(237,244,251,.25)" stroke-dasharray="4 6" stroke-width="2"/>
+      <!-- 叶轮俯视 + 导流流道 -->
+      <g>
+        <circle cx="450" cy="180" r="64" fill="#13273D" stroke="#FF9D45" stroke-width="2"/>
+        <g fill="#FF9D45" fill-opacity=".85">
+          <path d="M450,180 C438,166 442,140 458,132 L462,158 Z"/>
+          <path d="M450,180 C464,192 490,188 498,172 L472,168 Z"/>
+          <path d="M450,180 C436,192 410,188 402,172 L428,168 Z" transform="rotate(0)"/>
+        </g>
+        <g fill="#FF9D45" fill-opacity=".85">
+          <path d="M450,180 C438,194 442,220 458,228 L462,202 Z"/>
+          <path d="M450,180 C462,168 488,172 496,188 L470,192 Z"/>
+          <path d="M450,180 C438,166 412,170 404,186 L430,190 Z"/>
+        </g>
+        <circle cx="450" cy="180" r="10" fill="#1D3654" stroke="#FFC94D" stroke-width="2"/>
+        <path d="M505,140 q46,-16 88,-8 l0,16 q-42,-8 -84,10 Z" fill="#FF9D45" fill-opacity=".28" stroke="#FF9D45" stroke-opacity=".7"/>
+        <path d="M505,220 q46,16 88,8 l0,-16 q-42,8 -84,-10 Z" fill="#FF9D45" fill-opacity=".28" stroke="#FF9D45" stroke-opacity=".7"/>
+        <g fill="#FFC94D"><circle cx="560" cy="130" r="3.6"><animateMotion dur="1.8s" repeatCount="indefinite" path="M510,146 q40,-12 80,-6"/></animateMotion></circle>
+        <g fill="#FFC94D"><circle cx="560" cy="232" r="3.6"><animateMotion dur="1.8s" repeatCount="indefinite" path="M510,214 q40,12 80,6"/></animateMotion></circle>
+        <circle class="dot" cx="450" cy="114" r="3"/><polyline class="leader" points="450,114 450,64 350,64"/>
+        <text class="svgt" x="346" y="60" text-anchor="start">叶轮:曲面叶片</text>
+        <circle class="dot" cx="580" cy="122" r="3"/><polyline class="leader" points="580,122 640,92 660,92"/>
+        <text class="svgt sm" x="664" y="88" text-anchor="start">导流流道渐宽</text>
+        <text class="svgt sm dim" x="664" y="106" text-anchor="start">减速=升压</text>
+        <circle class="dot" cx="450" cy="246" r="3"/><polyline class="leader" points="450,246 450,296 350,296"/>
+        <text class="svgt sm" x="346" y="292" text-anchor="start">中心低压,上方熔盐补入</text>
+      </g>
+      <!-- 迷你剖面:环隙上行 + 压力梯度 -->
+      <g>
+        <rect x="762" y="70" width="64" height="230" rx="8" fill="#0D1B2C" stroke="#1D3654" stroke-width="2"/>
+        <rect x="776" y="70" width="36" height="230" fill="#FF9D45" fill-opacity=".2"/>
+        <g stroke="#FF9D45" stroke-width="2" fill="none" stroke-linecap="round"><path d="M788,270 l6,-9 6,9"/><path d="M788,226 l6,-9 6,9"/><path d="M788,182 l6,-9 6,9"/><path d="M788,138 l6,-9 6,9"/></g>
+        <rect x="794" y="160" width="60" height="20" rx="4" fill="#13273D" stroke="#EDF4FB" stroke-opacity=".4"/>
+        <path d="M854,164 l14,6 -14,6 Z" fill="#FF9D45"/>
+        <rect x="880" y="70" width="18" height="230" rx="6" fill="url(#gSalt)"/>
+        <rect x="880" y="70" width="18" height="230" rx="6" fill="none" stroke="rgba(237,244,251,.2)"/>
+        <circle class="dot" cx="794" cy="300" r="3"/><polyline class="leader" points="794,300 794,318 726,318"/>
+        <text class="svgt sm" x="722" y="314" text-anchor="start">环隙上行,出口引出</text>
+        <circle class="dot" cx="898" cy="300" r="3"/><polyline class="leader" points="898,300 898,318 930,318" opacity="0"/>
+        <polyline class="leader" points="898,70 930,58"/><text class="svgt sm" x="934" y="54" text-anchor="end">压力梯度:越高越强</text>
+        <polyline class="leader" points="898,300 930,312"/><text class="svgt sm dim" x="934" y="308" text-anchor="end">罐内(低压)</text>
+      </g>
+    </svg>
+    <p class="cap"><b>读图:</b>左=雨伞(体感),中=叶轮与渐宽导流流道(机构),右=盐沿环隙爬出罐(结果);三幅连起来就是「甩—接—送」。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>甩、接、送:叶轮给速度,流道变压力,压力送盐出罐。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「转多快?」</span><span class="m">↔</span><span class="r">转速反馈 / 正转转速测点</span></div>
+    <div class="eng-row"><span class="l">「费多大劲?」</span><span class="m">↔</span><span class="r">变频器电流</span></div>
+    <div class="eng-row"><span class="l">「允不允许远控?」</span><span class="m">↔</span><span class="r">数字量「远程控制 status」</span></div>
+    <div class="eng-row"><span class="l">「电流怎么偏了?」</span><span class="m">↔</span><span class="r">电流偏离转速预期 = 机械阻力变大<span class="dim">(幕6病症)</span></span></div>
+  </div>
+</section>
+
+<section class="act p1 wrap" id="act5">
+  <div class="act-no"><span class="n">幕 05 · 上篇</span><span class="g">熔盐泵本身</span></div>
+  <h2>转速提 10%,功率却爬 33%</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>骑变速车顶过风的人最有体感:<b>踏频加倍,车速差不多也加倍</b>;可迎面的风阻按平方涨,蹬一下要费<b>四倍</b>的劲;浑身发热、汗量直接翻到<b>八倍</b>。泵是同一副脾气——转速就是那一个旋钮,流量、压力、功耗按<b>一、二、三次方</b>连锁反应:拧一格,三样一起动,越靠后的涨得越凶。</p>
+  </div>
+  <div class="body">
+    <p>泵的世界里有一条连锁反应,叫<em>相似定律</em>,三句话说完:<b>流量跟转速成正比</b>——转速提到几倍,送出去的熔盐就是几倍;<b>压力(扬程)跟转速的平方</b>;<b>功耗跟转速的立方</b>。三样挂在同一根旋钮上,脾气却不一样:指数越靠后,爬得越凶。</p>
+    <p>立方这条曲线,是泵世界里最贵的一条:转速只抬 10%,流量只多一成,电耗却爬了约 33%,电机的热也从这根曲线里长出来。所以变频器从不猛踩油门,只<em>轻拧旋钮</em>——要多少流量,就给多少转速,让功耗贴着需求的下沿走。</p>
+    <p>平台盯的正是这根旋钮:DCS 侧<b>转速指令</b>下发到位没有,<b>转速反馈</b>跟上了没有,<b>变频器电流</b>对不对得起这个转速——转速没变电流却偏高,就是机械阻力在悄悄变大;这条判据的根,就扎在相似定律里。</p>
+  </div>
+
+  <div class="lab" id="lawlab">
+    <div class="lab-h"><span class="ic">INTERACTIVE</span><b>相似定律转速旋钮</b><span>教学基准 Q₀=100 m³/h · H₀=40 m · P₀=200 kW</span></div>
+    <div class="ctrl-row">
+      <label for="rpm">转速 n</label>
+      <input type="range" id="rpm" min="40" max="112" value="100" step="1">
+      <output id="rpmOut" class="mono">100%</output>
+      <span class="mono" id="lawSay" style="font-size:13px;color:var(--ink-66)">+0% → 功率 +0%</span>
+    </div>
+    <div class="law-bars" aria-hidden="true">
+      <div class="lb"><div class="col q" id="colQ" style="height:62%"></div></div>
+      <div class="lb"><div class="col h" id="colH" style="height:62%"></div></div>
+      <div class="lb"><div class="col p" id="colP" style="height:62%"></div></div>
+    </div>
+    <div class="law-nums">
+      <div class="ln"><div class="v" id="vQ" style="color:var(--cold)">100.0 m³/h</div><div class="k">流量 Q ∝ n</div></div>
+      <div class="ln"><div class="v" id="vH" style="color:var(--gold)">40.0 m</div><div class="k">扬程 H ∝ n²</div></div>
+      <div class="ln"><div class="v" id="vP" style="color:var(--hot)">200 kW</div><div class="k">功率 P ∝ n³</div></div>
+    </div>
+    <div class="amp-wrap">
+      <span class="mono" style="font-size:12.5px;color:var(--ink-66);white-space:nowrap">电流估算</span>
+      <div class="bar"><i id="ampBar"></i></div>
+      <span class="mono" id="ampTxt" style="font-size:13px;min-width:9em">—</span>
+    </div>
+    <div class="fig" style="margin:18px 0 0">
+      <svg viewBox="0 0 960 190" role="img" aria-label="n n² n³ 幂曲线族">
+        <line x1="60" y1="160" x2="920" y2="160" stroke="rgba(237,244,251,.25)"/>
+        <line x1="60" y1="160" x2="60" y2="20" stroke="rgba(237,244,251,.25)"/>
+        <line id="baseLine" x1="705" y1="160" x2="705" y2="26" stroke="rgba(237,244,251,.3)" stroke-dasharray="5 5"/>
+        <path id="cQ" d="" fill="none" stroke="#52C8FF" stroke-width="2"/>
+        <path id="cH" d="" fill="none" stroke="#FFC94D" stroke-width="2"/>
+        <path id="cP" d="" fill="none" stroke="#FF9D45" stroke-width="2.5"/>
+        <circle id="dotQ" r="5" fill="#52C8FF" cx="705" cy="90"/>
+        <circle id="dotH" r="5" fill="#FFC94D" cx="705" cy="90"/>
+        <circle id="dotP" r="5" fill="#FF9D45" cx="705" cy="90"/>
+        <polyline class="leader" points="810,32 930,40"/><text class="svgt mono sm" x="934" y="44" text-anchor="end" fill="#52C8FF">Q∝n</text>
+        <polyline class="leader" points="810,43 930,66"/><text class="svgt mono sm" x="934" y="70" text-anchor="end" fill="#FFC94D">H∝n²</text>
+        <polyline class="leader" points="810,53 930,100"/><text class="svgt mono sm" x="934" y="104" text-anchor="end" fill="#FF9D45">P∝n³</text>
+        <polyline class="leader" points="705,26 705,40"/><text class="svgt mono sm" x="705" y="54" text-anchor="middle">100% 基准</text>
+      </svg>
+    </div>
+    <p class="note" id="lawNote">把旋钮拧到 110%:流量只多 10%,功率却要多 <b>33%</b>——立方是泵世界里最贵的一条曲线;电流逼近电机额定 95% 时,定子就要开始发热(幕 6 见)。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>转速是唯一的流量旋钮,但电费按立方涨价。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「拧转速」</span><span class="m">↔</span><span class="r">相似定律 n / n² / n³ 与变频调速</span></div>
+    <div class="eng-row"><span class="l">「转没转到位?」</span><span class="m">↔</span><span class="r">转速指令 vs 转速反馈</span></div>
+    <div class="eng-row"><span class="l">「怎么这么费电?」</span><span class="m">↔</span><span class="r">变频器电流 × P∝n³</span></div>
+  </div>
+</section>
+<div class="part-divider p2 wrap">
+  <div class="pd-no">PART 2 / 2</div>
+  <h2>下篇 · 系统怎么守</h2>
+  <p>五幕:泵的 30 个体征、数据点的单行道、报警的两条线、五张化验单合成一个分数、以及最后那块大屏。</p>
+</div>
+
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%{r:7;opacity:.9}70%{r:16;opacity:0}100%{r:16;opacity:0}}
+.pulse{animation:pulse 1.8s ease-out infinite;fill:none;stroke:#FF9D45;stroke-width:2}
+#act6 .duo{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
+@media (max-width:900px){#act6 .duo{grid-template-columns:1fr}}
+.stator-badges .badge6{margin:2px 4px 2px 0}
+</style>
+
+<section class="act p2 wrap" id="act6">
+  <div class="act-no"><span class="n">幕 06 · 下篇</span><span class="g">系统怎么守</span></div>
+  <h2>泵不会说话,但它有 30 个体征</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>智能手表从不等你晕倒才报警:心率、血氧、步数,全天候盯着。每台泵也穿着一件这样的「体检背心」——<b>7 个数字量是状态灯</b>,一亮一灭;<b>23 路模拟量是连续的体温曲线</b>,一起一伏。泵不会开口,背心替它量。</p>
+  </div>
+  <div class="body">
+    <p>每台泵身上绑着 30 个体征。<b>7 个数字量</b>是变频器的状态灯:启动、停止、报警、故障、就绪、急停、远程控制,每盏只回答「亮」或「灭」;<b>23 路模拟量</b>是连续的体温曲线——转速、电流、五路振动、轴承温度、推力轴承、泵壳温度、定子线圈温度,画出泵一天的起伏。</p>
+    <p>有个容易误会的地方:<b>定子线圈温度量的是电机,不是泵体</b>——发烧的是电机,不是泵本身。而且不同泵的「背心」针脚不同:冷盐泵每相两个测点、三相共 6 个参数;调温泵和热盐泵每相一个,只有 3 个参数。读数之前,先认泵型。</p>
+    <p>这些数字不是挂着好看的,<b>每一路都对应一种病症</b>:振动升高,多半是<em>叶轮磨损或对中不良</em>;轴承温度上去,是<em>润滑在恶化</em>;定子温度蹿高,说明<em>电机过载或冷却变差</em>;电流偏离了转速该有的样子,则是<em>机械阻力在变大</em>。泵不会喊疼,化验单替它说话。</p>
+  </div>
+
+  <div class="lab">
+    <div class="lab-h">
+      <span class="ic">INTERACTIVE</span><b>测点病灶探照卡</b><span>点击 / Tab 聚焦图上光斑,右侧翻出病症卡</span>
+      <span class="hot-pick" style="margin-left:auto">
+        <button class="hp on" data-pump="cold">冷盐泵(6参数)</button>
+        <button class="hp" data-pump="hot">调温/热盐泵(3参数)</button>
+      </span>
+    </div>
+    <div class="duo">
+      <div id="pumpX6" style="border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-deep)"></div>
+      <div>
+        <div class="lesion-card" id="lesCard">
+          <h4>选一个光斑</h4>
+          <div class="kk">30 测点 = 7 数字量 + 23 模拟量</div>
+          <dl><dt>提示</dt><dd>方形冰蓝=数字量(罐口电控区);圆形橙=模拟量;带波纹圈的=5 路振动。</dd></dl>
+        </div>
+        <div class="stator-badges" style="margin-top:12px">
+          <div id="statorBox"></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">测点位置为教学示意(实际以现场测点清册/平台物模型为准);泵型页签切换的是定子线圈参数的差异——冷盐泵 u1/u2/v1/v2/w1/w2 六参数,调温/热盐泵 u/v/w 三参数。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>振动是脉搏,温度是体温,电流是胃口——每路测点都是泵的一句抱怨。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「给泵查个体」</span><span class="m">↔</span><span class="r">30 测点 = 7DI + 23AI<span class="dim">(焦点泵卡 6关键+12温度+5振动+7数字量)</span></span></div>
+    <div class="eng-row"><span class="l">「电机发烧了」</span><span class="m">↔</span><span class="r">定子线圈温度 motor_temp_*<span class="dim">(冷盐6参数 / 调温热盐3参数)</span></span></div>
+    <div class="eng-row"><span class="l">「脉搏乱不乱」</span><span class="m">↔</span><span class="r">motor_vibration_x/y/z + pump_vibration_x/y</span></div>
+  </div>
+</section>
+<section class="act p2 wrap" id="act7">
+  <div class="act-no"><span class="n">幕 07 · 下篇</span><span class="g">系统怎么守</span></div>
+  <h2>一个数据点的旅程:全程单行道</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>把平台想成一家医院的<b>化验科</b>:护士在你手臂上抽血——那管血,就是现场测点采到的一个数据点;样本从<em>只进不出</em>的传样窗口递进去,窗口自己不化验、不诊断,只认一个方向,这就是和利时安全网闸;化验室把样本分拣编号,是数据接入解析;标本进冷库存档,是时序数据库;报告最终送到医生桌上,是大屏与后台。</p>
+    <p>血一抽出身体,就再也收不回去——所以这条流水线,天生是一条<b>单行道</b>。</p>
+  </div>
+  <div class="body">
+    <p>每个数据点的一生只走一条路:在<b>现场测点</b>被 DCS 采集,穿过<em>和利时安全网闸</em>这扇「只进不出」的传样窗口,经数据接入解析分拣登记,存进<em>时序数据库</em>归档。全程单行道——现场只发,平台只收,一条指令也发不回去。</p>
+    <p>入库之后,它要见三位节奏完全不同的读者:<b>报警引擎</b>像急诊医生全天候盯守,<em>健康评分</em>像住院部按日结账,<em>主动发现</em>像查房医生每小时巡一圈。最后汇上<em>数字大屏</em>——5 秒一刷新,9 台泵的近况挂满一整面墙。</p>
+    <p>最后是一个诚实点:大屏上的「实时值」,其实是<em>各测点最后一条值</em>,不保证新鲜——就像化验单上的数字,永远只属于抽血那一刻。所以读任何数,先看<b>时间戳</b>;没有时间戳的读数,等于一张没写日期的旧报告。</p>
+  </div>
+
+  <div class="fig">
+    <svg id="pipeLine" viewBox="0 0 960 360" role="img" aria-label="数据链路五站管线">
+      <defs>
+        <marker id="mG" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0,0 L6,3.5 L0,7 Z" fill="#FF9D45"/></marker>
+      </defs>
+      <!-- 主线 -->
+      <path id="mainLine" d="M120,240 L880,240" fill="none" stroke="#FF9D45" stroke-width="3" opacity=".85"/>
+      <g fill="#FFC94D"><circle r="3.6"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#mainLine"/></animateMotion></circle><circle r="2.8"><animateMotion dur="5s" begin="1.2s" repeatCount="indefinite"><mpath href="#mainLine"/></animateMotion></circle><circle r="2.8"><animateMotion dur="5s" begin="2.5s" repeatCount="indefinite"><mpath href="#mainLine"/></animateMotion></circle><circle r="2.8"><animateMotion dur="5s" begin="3.8s" repeatCount="indefinite"><mpath href="#mainLine"/></animateMotion></circle></g>
+      <!-- 站1 现场测点 -->
+      <rect x="70" y="210" width="100" height="60" rx="10" fill="#13273D" stroke="#1D3654" stroke-width="2"/>
+      <circle cx="120" cy="234" r="7" fill="none" stroke="#52C8FF" stroke-width="2"/><circle cx="120" cy="234" r="2.5" fill="#52C8FF"/>
+      <line x1="102" y1="254" x2="138" y2="254" stroke="#52C8FF" stroke-width="2" stroke-opacity=".7"/>
+      <!-- 站2 网闸(单向阀) -->
+      <g id="gate">
+        <rect x="292" y="212" width="14" height="56" rx="3" fill="#1D3654"/>
+        <rect x="354" y="212" width="14" height="56" rx="3" fill="#1D3654"/>
+        <path d="M306,218 L360,240 L306,262 Z" fill="none" stroke="#FF9D45" stroke-width="2.5"/>
+        <line x1="352" y1="224" x2="352" y2="256" stroke="#FF9D45" stroke-width="2.5"/>
+        <g id="gateX" opacity="0"><circle cx="330" cy="240" r="14" fill="rgba(255,107,107,.15)" stroke="#FF6B6B" stroke-width="2"/><line x1="322" y1="232" x2="338" y2="248" stroke="#FF6B6B" stroke-width="3"/><line x1="338" y1="232" x2="322" y2="248" stroke="#FF6B6B" stroke-width="3"/></g>
+        <line id="revArrow" x1="470" y1="240" x2="392" y2="240" stroke="#FF6B6B" stroke-width="3" opacity="0"/>
+      </g>
+      <!-- 站3 接入解析 -->
+      <rect x="478" y="210" width="110" height="60" rx="10" fill="#13273D" stroke="#1D3654" stroke-width="2"/>
+      <g stroke="#EDF4FB" stroke-opacity=".6" stroke-width="2"><line x1="496" y1="228" x2="570" y2="228"/><line x1="496" y1="242" x2="570" y2="242"/><line x1="496" y1="256" x2="546" y2="256"/></g>
+      <!-- 站4 时序库(圆柱) -->
+      <g>
+        <path d="M664,218 v48 a34,12 0 0 0 68,0 v-48" fill="#0D1B2C" stroke="#1D3654" stroke-width="2"/>
+        <ellipse cx="698" cy="218" rx="34" ry="12" fill="#13273D" stroke="#1D3654" stroke-width="2"/>
+        <path d="M680,236 q18,-8 36,0" fill="none" stroke="#FFC94D" stroke-width="2" stroke-opacity=".8"/>
+      </g>
+      <!-- 三支路引擎 -->
+      <line x1="698" y1="206" x2="698" y2="130" stroke="rgba(237,244,251,.3)" stroke-dasharray="4 5"/>
+      <line x1="698" y1="130" x2="470" y2="130" stroke="rgba(237,244,251,.3)" stroke-dasharray="4 5"/>
+      <line x1="698" y1="130" x2="698" y2="130" stroke="none"/>
+      <circle cx="470" cy="130" r="15" fill="#13273D" stroke="#FF6B6B" stroke-width="2"/>
+      <circle cx="600" cy="130" r="15" fill="#13273D" stroke="#FFC94D" stroke-width="2"/>
+      <circle cx="730" cy="130" r="15" fill="#13273D" stroke="#58D6A9" stroke-width="2"/>
+      <line x1="698" y1="130" x2="745" y2="130" stroke="rgba(237,244,251,.3)" stroke-dasharray="4 5"/>
+      <!-- 站5 大屏 -->
+      <g id="screenNode">
+        <rect x="840" y="210" width="100" height="60" rx="10" fill="#13273D" stroke="#1D3654" stroke-width="2"/>
+        <g stroke="#52C8FF" stroke-width="2" stroke-opacity=".85"><line x1="854" y1="228" x2="886" y2="228"/><line x1="854" y1="242" x2="926" y2="242"/><line x1="854" y1="256" x2="906" y2="256"/></g>
+        <circle cx="926" cy="222" r="5" fill="#58D6A9"><animate attributeName="opacity" values="1;.15;1" dur="2.5s" repeatCount="indefinite"/></circle>
+      </g>
+      <!-- 引出线:上方 -->
+      <g>
+        <circle class="dot" cx="470" cy="115" r="3"/><polyline class="leader" points="470,115 470,72 300,72"/>
+        <text class="svgt" x="296" y="68" text-anchor="start">报警引擎</text>
+        <text class="svgt mono sm" x="296" y="86" text-anchor="start" fill="#FF6B6B">全天候盯守</text>
+        <circle class="dot" cx="600" cy="115" r="3"/><polyline class="leader" points="600,115 600,48 470,48"/>
+        <text class="svgt" x="466" y="44" text-anchor="end">健康评分</text>
+        <text class="svgt mono sm" x="466" y="62" text-anchor="end" fill="#FFC94D">按日结账</text>
+        <circle class="dot" cx="745" cy="122" r="3"/><polyline class="leader" points="745,122 800,84 700,84"/>
+        <text class="svgt" x="696" y="80" text-anchor="end">主动发现</text>
+        <text class="svgt mono sm" x="696" y="98" text-anchor="end" fill="#58D6A9">每小时巡逻</text>
+      </g>
+      <!-- 引出线:下方 -->
+      <g>
+        <circle class="dot" cx="120" cy="272" r="3"/><polyline class="leader" points="120,272 120,316 60,316"/>
+        <text class="svgt" x="56" y="312" text-anchor="start">现场测点(DCS 采集)</text>
+        <circle class="dot" cx="330" cy="272" r="3"/><polyline class="leader" points="330,272 330,336 200,336"/>
+        <text class="svgt" x="196" y="332" text-anchor="start">和利时安全网闸</text>
+        <text class="svgt mono sm" x="196" y="350" text-anchor="start" fill="#FF9D45">单向转发 · 只进不出</text>
+        <circle class="dot" cx="533" cy="272" r="3"/><polyline class="leader" points="533,272 533,316 420,316"/>
+        <text class="svgt" x="416" y="312" text-anchor="start">数据接入解析</text>
+        <circle class="dot" cx="732" cy="262" r="3"/><polyline class="leader" points="732,262 760,300 640,300"/>
+        <text class="svgt" x="636" y="296" text-anchor="start">时序数据库</text>
+        <circle class="dot" cx="890" cy="272" r="3"/><polyline class="leader" points="890,272 890,316 930,316"/>
+        <text class="svgt" x="934" y="312" text-anchor="end">数字大屏</text>
+        <text class="svgt mono sm" x="934" y="330" text-anchor="end" fill="#58D6A9">5 秒刷新</text>
+      </g>
+    </svg>
+    <p class="cap"><b>读图:</b>主线粒子只向右流;网闸是一枚单向阀——正向可过,反向弹回;时序库分出三条节奏不同的支路,最后汇入 5 秒一跳的大屏。</p>
+  </div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="ic">INTERACTIVE</span><b>网闸单向阀演示</b><span>平台侧发不回一条指令;大屏读数先看时间戳</span></div>
+    <div class="gate-lab">
+      <button class="btn cold" id="revBtn">从平台侧发一条反向指令</button>
+      <button class="btn" id="pauseBtn">暂停链路</button>
+      <span class="state-chip ok" id="gateMsg" style="display:none"></span>
+    </div>
+    <div class="gate-lab">
+      <div class="ts-card">焦点泵 · 轴承温度读数<br><span class="t" id="tsNow">--:--:--</span><br><span style="color:var(--ink-45);font-size:12px">数据截至(每秒走字)</span></div>
+      <div class="ts-card" id="tsFrozen" style="display:none">链路已暂停<br><span class="t" style="color:var(--ink-45)">数值保持不变</span><br><span style="color:var(--ink-45);font-size:12px">这就是「最后一条值」:屏上数字不新鲜了,但它不会告诉你。</span></div>
+    </div>
+    <p class="note" id="gateNote">点「反向指令」:红色箭头从平台侧推进,到网闸节点被弹回、亮红✕——网闸单向转发,平台对现场只读。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>数据走单行道:现场只发,平台只收;读任何数,先看时间戳。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「数据传上来了吗?」</span><span class="m">↔</span><span class="r">链路:DCS→安全网闸→接入解析→时序库→引擎/大屏</span></div>
+    <div class="eng-row"><span class="l">「这数新鲜吗?」</span><span class="m">↔</span><span class="r">「最后一条值」+「数据截至」时间戳</span></div>
+  </div>
+</section>
+<section class="act p2 wrap" id="act8">
+  <div class="act-no"><span class="n">幕 08 · 下篇</span><span class="g">系统怎么守</span></div>
+  <h2>先是一声嘀,然后才轮到响铃</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>家里厨房漏水,最怕的不是漏,而是漏了没人知道。好在漏水自己会分两步报信:先是水池底下<em>滴滴答答</em>,听见就能从容关阀、拖地;等水<em>漫过门槛</em>,才是大祸,必须立刻行动。好的报警也一样——不追求铃多,追求每声铃都有人接、有下文。</p>
+  </div>
+  <div class="body">
+    <p>系统给每个测点画了两条线:先碰到的是<b>预警</b>——轻轻嘀一声,提醒你来看,还来得及从容处理;碰到第二条才是<b>严重</b>——正式响铃,要求立刻动手。两条线之间留出的,就是人的反应时间:让你拎着抹布走向水池,而不是蹚着水冲进去。</p>
+    <p>振动报警更讲究。一台泵上有五路振动——电机 x/y/z、泵 x/y,走<b>共振复合判据</b>:单路抖一下,可能只是路过的毛刺;五路<em>合成</em>一起看,同时往上蹿才作数。就像屋里晃一下可能是卡车驶过,吊灯桌椅水杯一起晃,才真要往门外跑。</p>
+    <p>铃响之后有下文:每条报警从<b>未处理</b>出发,经<em>确认</em>走向<em>恢复</em>或<em>忽略</em>,步步留痕,谁接的、怎么处理的都有据可查。系统还会自动关联<em>故障知识库</em>案例——这种病以前怎么治,翻出来对照,不凭记忆拍板。大屏上的「未处理/严重告警」两个数,就是闭环的入口。</p>
+  </div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="ic">INTERACTIVE</span><b>振动五路合成与报警关单</b>
+      <span class="chip" style="margin-left:auto"><i style="background:var(--gold)"></i>未处理 <b id="cOpen" class="mono">0</b></span>
+      <span class="chip"><i style="background:var(--red)"></i>严重 <b id="cSev" class="mono">0</b></span>
+    </div>
+    <div id="chans">
+      <div class="chan"><span class="cn">电机振动 X</span><input type="range" min="0" max="10" step="0.1" value="2.0" data-ch="0"><output class="mono">2.0</output></div>
+      <div class="chan"><span class="cn">电机振动 Y</span><input type="range" min="0" max="10" step="0.1" value="2.1" data-ch="1"><output class="mono">2.1</output></div>
+      <div class="chan"><span class="cn">电机振动 Z</span><input type="range" min="0" max="10" step="0.1" value="1.8" data-ch="2"><output class="mono">1.8</output></div>
+      <div class="chan"><span class="cn">泵振动 X</span><input type="range" min="0" max="10" step="0.1" value="2.4" data-ch="3"><output class="mono">2.4</output></div>
+      <div class="chan"><span class="cn">泵振动 Y</span><input type="range" min="0" max="10" step="0.1" value="2.2" data-ch="4"><output class="mono">2.2</output></div>
+    </div>
+    <div class="fig" style="margin:16px 0 0">
+      <svg viewBox="0 0 960 280" id="riverSvg" role="img" aria-label="五路振动汇流">
+        <g fill="none" stroke-linecap="round">
+          <path id="t0" d="M60,44 C240,44 320,120 430,132" stroke="#52C8FF" stroke-width="3" opacity=".8"/>
+          <path id="t1" d="M60,86 C240,86 320,124 430,136" stroke="#52C8FF" stroke-width="3" opacity=".65"/>
+          <path id="t2" d="M60,128 C240,128 330,132 430,140" stroke="#52C8FF" stroke-width="3" opacity=".5"/>
+          <path id="t3" d="M60,170 C240,170 320,156 430,148" stroke="#FF9D45" stroke-width="3" opacity=".65"/>
+          <path id="t4" d="M60,212 C240,212 320,164 430,152" stroke="#FF9D45" stroke-width="3" opacity=".8"/>
+        </g>
+        <rect x="430" y="112" width="440" height="56" rx="12" fill="#0D1B2C" stroke="#1D3654" stroke-width="2"/>
+        <line x1="638" y1="104" x2="638" y2="176" stroke="#FFC94D" stroke-width="2.5" stroke-dasharray="6 5"/>
+        <line x1="758" y1="104" x2="758" y2="176" stroke="#FF6B6B" stroke-width="2.5"/>
+        <rect id="cBar" x="434" y="116" width="0" height="48" rx="9" fill="#58D6A9" opacity=".85"/>
+        <circle id="cDot" cx="500" cy="140" r="7" fill="#fff" stroke="#0A1422" stroke-width="2"/>
+        <g fill="#FFC94D"><circle r="3.2"><animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#t0"/></animateMotion></circle><circle r="3.2"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#t3"/></animateMotion></circle></g>
+        <g>
+          <polyline class="leader" points="638,104 638,64 560,64"/><text class="svgt mono sm" x="556" y="60" text-anchor="end" fill="#FFC94D">预警级 4.7</text>
+          <polyline class="leader" points="758,104 758,84 820,84"/><text class="svgt mono sm" x="824" y="80" text-anchor="start" fill="#FF6B6B">严重级 7.1 mm/s</text>
+          <circle class="dot" cx="650" cy="140" r="0"/>
+          <polyline class="leader" points="872,168 872,208 930,208"/><text class="svgt sm" x="934" y="204" text-anchor="end">合成值(五路合成)</text>
+          <polyline class="leader" points="60,44 40,28"/><text class="svgt sm" x="36" y="24" text-anchor="start">五路支流:电机 x/y/z + 泵 x/y</text>
+        </g>
+      </svg>
+    </div>
+    <div class="ctrl-row">
+      <button class="btn primary" id="glitchBtn">单点毛刺</button>
+      <button class="btn" id="resonBtn" style="border-color:rgba(255,107,107,.5);color:var(--red)">注入共振</button>
+      <button class="btn cold" id="resetBtn">复位</button>
+      <span class="state-chip ok" id="vJudge">合成 2.1 mm/s · 不触发</span>
+    </div>
+    <div class="alarm-card hidden" id="alarmCard">
+      <h4 style="color:var(--gold)">振动共振复合预警</h4>
+      <div class="meta">20WSC10AP010 · 等级:预警 · 触发:五路合成 6.2 mm/s ≥ 预警线 4.7(未达严重 7.1,教学演示)</div>
+      <div class="flow-stamps">
+        <button class="stamp s1" data-step="1">① 未处理</button>
+        <button class="stamp" data-step="2">② 确认</button>
+        <button class="stamp" data-step="3a">③ 恢复</button>
+        <button class="stamp" data-step="3b">③ 忽略</button>
+      </div>
+      <div class="kb-entry" id="kbEntry"><b>知识库案例(示意数据):</b>2026-07 · 同型号泵五路同相抬升,诊断为叶轮出入口堵塞致流体激振;清理后 48h 内合成值回落至 2.5 以下。</div>
+    </div>
+    <p class="note">全部由点击触发、无自动循环:「单点毛刺」只抬一路尖峰——合成值不动,判据灰「不触发」;「注入共振」五路同相抬升——单路均未越严重线,合成值越过预警线 4.7,判据金「预警触发」并弹卡;按 未处理→确认→恢复/忽略 逐级盖章,确认后翻出知识库案例;顶部计数 chip 实时联动。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>报警不是铃越多越好,而是每声铃都有人接、有下文。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「报警了」</span><span class="m">↔</span><span class="r">两级阈值(预警→严重)</span></div>
+    <div class="eng-row"><span class="l">「振得不对劲」</span><span class="m">↔</span><span class="r">五路振动共振复合判据</span></div>
+    <div class="eng-row"><span class="l">「这条警谁管?」</span><span class="m">↔</span><span class="r">处置闭环(未处理→确认→恢复/忽略)</span></div>
+    <div class="eng-row"><span class="l">「以前出过没?」</span><span class="m">↔</span><span class="r">故障知识库案例关联</span></div>
+  </div>
+</section>
+<section class="act p2 wrap" id="act9">
+  <div class="act-no"><span class="n">幕 09 · 下篇</span><span class="g">系统怎么守</span></div>
+  <h2>五张化验单,合成一个分数</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>期末总评从不把五门卷面分一平均了事:每门先按考纲给分,再按学分加权——不是简单平均,更不是拍脑袋。偶尔一次小测失手,老师看的是一学期的稳定表现,不为一次抖动改判;可要是科科都逼近红线,加权一算,总评立刻见颜色。</p>
+  </div>
+  <div class="body">
+    <p>五张化验单就是五门课:振动看 <b>P95</b>,对 <b>7.1 mm/s</b>;轴承温度对 <b>95°C</b>;定子温度对 <b>140°C</b>;转速变动系数对 <b>0.15</b>;电流偏差对 <b>10%</b>。五科按学分加权——振动 <b>30</b>、轴承 <b>25</b>、定子 <b>20</b>、转速 <b>15</b>、电流 <b>10</b>——<em>加出来的不是平均分,是总评</em>。</p>
+    <p>五科共用同一把<em>分段线性尺子</em>:实测不到阈值的六成,得分从 <b>100</b> 缓降到 <b>80</b>,余量还足;过了六成、逼近门槛,就从 <b>80</b> 一路陡到 <b>0</b>;越线直接归零。越靠近极限掉分越狠——这正是磨损的脾气:小毛病可以拖,临界状态不能拖。</p>
+    <p>毛刺不许吓人:<b>P95</b> 取一百个读数里第 95 位那个,偶发尖峰被压住,像老师只认稳定表现;有效样本不足就老实标<b>「数据不足」</b>,不硬打分。同一把尺子在 Java 与 AI 两侧同构,分按 <b>80/60/40</b> 归入优、良、注意、危险——九台泵在屏上排成成绩单。</p>
+  </div>
+
+  <div class="lab" id="hlab">
+    <div class="lab-h"><span class="ic">INTERACTIVE</span><b>健康分计算器</b><span>分段线性公式与线上引擎一致</span>
+      <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn cold" data-preset="ok">预设:健康</button>
+        <button class="btn" data-preset="warn">预设:注意</button>
+        <button class="btn" data-preset="bad">预设:危险</button>
+      </span>
+    </div>
+    <div id="dims"></div>
+    <div class="wstack" aria-hidden="true">
+      <i style="width:30%;background:var(--hot)" title="振动30"></i><i style="width:25%;background:var(--gold)" title="轴承25"></i><i style="width:20%;background:var(--cold)" title="定子20"></i><i style="width:15%;background:var(--green)" title="转速15"></i><i style="width:10%;background:#8A9BB5" title="电流10"></i>
+    </div>
+    <div class="kv" style="margin-bottom:8px"><span>权重:振动30 · 轴承25 · 定子20 · 转速15 · 电流10(合计100)</span></div>
+    <div class="score-big">
+      <span class="num" id="hTotal">—</span>
+      <span class="lv" id="hGrade">—</span>
+      <label class="tog"><input type="checkbox" id="spikeT"> 注入毛刺(演示 P95)</label>
+      <label class="tog"><input type="checkbox" id="naT"> 样本不足</label>
+      <span class="mono" id="spikeInfo" style="font-size:12.5px;color:var(--ink-45)"></span>
+    </div>
+    <div class="mini-cards">
+      <div class="mini-card"><div class="k">大屏 · 平均健康分(联动)</div><div class="v" id="mcAvg" style="color:var(--green)">—</div></div>
+      <div class="mini-card"><div class="k">大屏 · 等级分布(联动)</div><div class="v" id="mcDist" style="font-size:13px;line-height:1.8">—</div></div>
+      <div class="mini-card"><div class="k">大屏 · 本泵排名(联动)</div><div class="v" id="mcRank">—</div></div>
+    </div>
+    <div class="formula-box">
+      x ≤ 0.6t:score = <b>100 − 20x / (0.6t)</b> &nbsp;|&nbsp; 0.6t &lt; x ≤ t:score = <b>80 − 80(x − 0.6t) / (0.4t)</b> &nbsp;|&nbsp; x &gt; t:score = <b>0</b><br>
+      total = Σ(score × w) / 100 &nbsp;·&nbsp; t = 振动 7.1 mm/s · 轴承 95°C · 定子 140°C · 转速 cv 0.15 · 电流偏差 10% &nbsp;·&nbsp; 振动原始序列先取 <b>P95</b> 再入尺
+    </div>
+    <p class="foot-note">与线上 Java 引擎 / AI 侧同公式同夹具(五维阈值、权重即线上口径);本页演示读数均为教学示例。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>健康分不是及格线,是「还剩多少余量」的读数。</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「这泵还能撑多久?」</span><span class="m">↔</span><span class="r">五维加权健康分<span class="dim">(权重 30/25/20/15/10)</span></span></div>
+    <div class="eng-row"><span class="l">「毛刺别吓我」</span><span class="m">↔</span><span class="r">P95 聚合</span></div>
+    <div class="eng-row"><span class="l">「没数就别打分」</span><span class="m">↔</span><span class="r">样本不足标「数据不足」</span></div>
+    <div class="eng-row"><span class="l">「优/良/注意/危险」</span><span class="m">↔</span><span class="r">80 / 60 / 40 档位</span></div>
+  </div>
+</section>
+<section class="act p2 wrap" id="act10">
+  <div class="act-no"><span class="n">幕 10 · 下篇</span><span class="g">系统怎么守</span></div>
+  <h2>大屏是仪表盘,不是水晶球</h2>
+  <div class="analogy"><span class="tag">打个比方</span>
+    <p>候机大厅里抬头扫一眼信息屏:几十个航班,哪班在登机、哪班延误,一屏尽收。大屏就是这块屏——九台泵、储热率、告警流,一瞥知全貌。</p>
+    <p>但「实时值」要留个心眼:它更像外卖软件里的骑手位置——那个小蓝点不是骑手此刻在哪,而是他<b>上次上报</b>的位置。三分钟前的点和半小时前的点,含金量完全不同。看数之前,先看上报时间。</p>
+  </div>
+  <div class="body">
+    <p>大屏五秒刷新,一屏十一个区:运行与总数(冷盐 4、调温 2、热盐 3)、储热率、平均健康分、告警流、AI 诊断动态铺满一墙——像航站楼的信息屏,抬头一瞥,全站尽收。</p>
+    <p>「电站现在干啥呢」不用猜:运行模式由泵组运行状态加母管温度按优先级派生——<b>冻凝风险</b>压过一切,其后依次是双工、充热中、放热中、待机,并附精确到秒的<b>数据截至</b>。要盯某台泵,切焦点泵:6 关键 + 12 温度 + 5 振动 + 7 数字量,一屏装下。</p>
+    <p>AI 只递线索,不替人拍板:健康评分按日滚动,主动发现每小时巡一遍,确认键永远在人手里。读数前先瞄「数据截至」——实时值是各测点最后一条上报值;想知道以前咋样,拉 30 天时间轴看趋势。这套系统守的不是某台泵,是「熔盐一直在流动」这件事。</p>
+  </div>
+
+  <div class="lab">
+    <div class="lab-h"><span class="ic">INTERACTIVE</span><b>11 区缩比大屏</b><span>悬停/点击卡片看注解;角盖章号,点它跳回讲它的那一幕(数值均为教学示例)</span></div>
+    <div class="dash">
+      <div class="dcell" data-anno="a1"><button class="ab" data-go="act1">幕01</button><div class="k">运行 / 总数(分泵型)</div><div class="v" style="color:var(--green)">9<small> 运行</small><small> / </small>4+2+3</div></div>
+      <div class="dcell" data-anno="a2"><button class="ab" data-go="act8">幕08</button><div class="k">未处理 / 严重告警</div><div class="v"><span style="color:var(--gold)" id="dOpen">2</span><small> / </small><span style="color:var(--red)" id="dSev">1</span></div></div>
+      <div class="dcell" data-anno="a3"><button class="ab" data-go="act9">幕09</button><div class="k">平均健康分</div><div class="v" id="dAvg" style="color:var(--cold)">74.6</div></div>
+      <div class="dcell" data-anno="a4"><button class="ab" data-go="act1">幕01</button><div class="k">储热率</div><div class="v" style="color:var(--gold)">72<small> %</small></div><div style="font-family:var(--mono);font-size:12px;color:var(--ink-45);margin-top:2px">冷 4.99m / 热 8.63m</div></div>
+      <div class="dcell wide" data-anno="a5"><button class="ab" data-go="act2">幕02</button><div class="k">运行模式(派生 · 附数据截至)</div>
+        <div class="v"><span class="state-chip warn" id="dMode">充热中</span><small class="mono" style="margin-left:10px">数据截至 <span id="dTs">--:--:--</span></small></div>
+        <div class="mode-judge">
+          <label class="tog"><input type="checkbox" id="mjCold" checked> 冷盐组</label>
+          <label class="tog"><input type="checkbox" id="mjHot" checked> 热盐组</label>
+          <label class="tog" title="调温泵只做温度微调,不参与运行模式派生"><input type="checkbox" id="mjAdj" disabled> 调温组(不参与派生)</label>
+          <label class="tog" style="flex:1 1 200px">母管温度<input type="range" id="mjT" min="200" max="320" value="290" step="1" style="flex:1 1 90px"><output class="mono" id="mjTo" style="font-size:13px">290°C</output></label>
+        </div>
+        <div class="state-strip" id="mjStrip" style="margin-top:8px">
+          <span class="st s-bad" data-m="冻凝风险">冻凝风险</span><span class="st s-warn" data-m="双工">双工</span><span class="st s-ok" data-m="充热中">充热中</span><span class="st s-ok" data-m="放热中">放热中</span><span class="st" data-m="待机">待机</span>
+        </div>
+      </div>
+      <div class="dcell" data-anno="a6"><button class="ab" data-go="act9">幕09</button><div class="k">健康等级分布</div>
+        <div class="bars">
+          <span class="b"><i style="width:56%;background:var(--green)"></i>优 5</span>
+          <span class="b"><i style="width:22%;background:var(--cold)"></i>良 2</span>
+          <span class="b"><i style="width:11%;background:var(--gold)"></i>注意 1</span>
+          <span class="b"><i style="width:11%;background:var(--red)"></i>危险 1</span>
+        </div>
+      </div>
+      <div class="dcell tall" data-anno="a7"><button class="ab" data-go="act9">幕09</button><div class="k">全泵健康排名</div>
+        <div class="bars" id="rankBars">
+          <span class="b"><i style="width:92%;background:var(--green)"></i>AP010 · 92</span>
+          <span class="b"><i style="width:90%;background:var(--green)"></i>AP020 · 90</span>
+          <span class="b"><i style="width:88%;background:var(--green)"></i>AP030 · 88</span>
+          <span class="b"><i style="width:86%;background:var(--green)"></i>WSH010 · 86</span>
+          <span class="b"><i style="width:83%;background:var(--green)"></i>AP050 · 83</span>
+          <span class="b"><i style="width:52%;background:var(--gold)"></i>AP060 · 52</span>
+          <span class="b"><i style="width:78%;background:var(--cold)"></i>WSH020 · 78</span>
+          <span class="b"><i style="width:64%;background:var(--cold)"></i>WSH030 · 64</span>
+          <span class="b"><i style="width:38%;background:var(--red)"></i>AP040 · 38</span>
+        </div>
+      </div>
+      <div class="dcell wide" data-anno="a8"><button class="ab" data-go="act8">幕08</button><div class="k">告警流</div>
+        <div class="mono" style="font-size:12px;line-height:2;color:var(--ink-66)">
+          <span style="color:var(--red)">严重</span> AP040 轴承温度 101°C 越限<br>
+          <span style="color:var(--gold)">预警</span> WSH030 电机振动X 5.2 mm/s 越限<br>
+          <span style="color:var(--green)">恢复</span> AP010 轴承温度波动 已恢复
+        </div>
+      </div>
+      <div class="dcell" data-anno="a9"><button class="ab" data-go="act9">幕09</button><div class="k">AI 诊断动态</div>
+        <div class="mono" style="font-size:12px;line-height:2;color:var(--ink-66)">评分 · 今日已结 9 台<br>发现 · 09:00 巡逻 <span style="color:var(--gold)">1 条线索</span><br>诊断 · 等待人工确认</div>
+      </div>
+      <div class="dcell wide" data-anno="a10"><button class="ab" data-go="act6">幕06</button><div class="k">焦点泵 · 20WSC10AP010</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip" style="border-color:rgba(88,214,169,.5);color:var(--green)">6 关键</span>
+          <span class="chip" style="border-color:rgba(255,157,69,.5);color:var(--hot)">12 温度</span>
+          <span class="chip" style="border-color:rgba(255,201,77,.5);color:var(--gold)">5 振动</span>
+          <span class="chip" style="border-color:rgba(82,200,255,.5);color:var(--cold)">7 数字量</span>
+        </div>
+        <div class="kv" style="margin-top:8px"><span>转速反馈</span><b>1480 rpm</b><span>电流</span><b>82 A</b><span>轴承DE</span><b>61°C</b></div>
+      </div>
+      <div class="dcell wide" data-anno="a11"><button class="ab" data-go="act7">幕07</button><div class="k">30 天时间轴(看趋势不看单点)</div>
+        <svg viewBox="0 0 420 64" style="margin-top:4px" aria-hidden="true">
+          <polyline points="10,40 50,38 90,42 130,36 170,39 210,33 250,37 290,30 330,34 370,26 410,28" fill="none" stroke="#58D6A9" stroke-width="2.5"/>
+          <circle cx="290" cy="30" r="3.5" fill="#FFC94D"/><polyline class="leader" points="290,30 290,14 330,14" opacity=".6"/><text class="svgt" style="font-size:10px" x="334" y="17">一次毛刺,趋势没变</text>
+        </svg>
+      </div>
+    </div>
+    <div class="anno" id="anno"></div>
+    <p class="foot-note" style="margin-top:12px">常驻角注:实时值 = 各测点最后一条值;读数先看「数据截至」。</p>
+  </div>
+
+  <div class="remember"><span class="tag">一句话记住</span><p>大屏一眼看全站,但每个数都要问一句:你是几点的?</p></div>
+  <div class="eng">
+    <div class="eng-h"><b>工程翻译</b><span>现场口语 ↔ 平台术语</span></div>
+    <div class="eng-row"><span class="l">「电站现在干啥呢?」</span><span class="m">↔</span><span class="r">运行模式<span class="dim">(泵组状态+母管温度派生,附数据截至到秒)</span></span></div>
+    <div class="eng-row"><span class="l">「具体盯一台泵」</span><span class="m">↔</span><span class="r">焦点泵(6关键+12温度+5振动+7数字量)</span></div>
+    <div class="eng-row"><span class="l">「它以前咋样?」</span><span class="m">↔</span><span class="r">30 天时间轴(看趋势不看单点)</span></div>
+    <div class="eng-row"><span class="l">「AI 在干嘛?」</span><span class="m">↔</span><span class="r">健康评分(按日)+ 主动发现(每小时)+ AI 诊断动态</span></div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <p class="mono">SALT PUMP PRIMER · 教学页面</p>
+  <p>页面演示读数(温度、液位、报警与健康分读数)均为<b style="color:var(--gold)">教学示例</b>,用于讲清原理与量级;五维阈值、权重与分段线性公式与线上引擎一致(凝固线 240°C 为教学值);实际运行口径以「光热电站熔盐泵智能运营管理系统」线上引擎与大屏为准。</p>
+</footer>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)}, $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---- reduced motion:SMIL 全部暂停 ---- */
+function pauseAllSmil(){ $$("svg").forEach(function(s){ try{s.pauseAnimations()}catch(e){} }); }
+if(RM) pauseAllSmil();
+
+/* ---- 顶部进度条 ---- */
+var bar=$("#topbar i");
+function onScroll(){
+  var h=document.documentElement, max=h.scrollHeight-h.clientHeight;
+  bar.style.width=(max>0?(h.scrollTop/max*100):0)+"%";
+}
+addEventListener("scroll",onScroll,{passive:true}); onScroll();
+
+/* ---- 左侧圆点导航 ---- */
+var NAV=[["act1","01 充电宝"],["act2","02 怕冷"],["act3","03 剖面"],["act4","04 甩水"],["act5","05 旋钮"],
+         ["act6","06 体征"],["act7","07 旅程"],["act8","08 报警"],["act9","09 评分"],["act10","10 大屏"]];
+var dn=$("#dotnav");
+NAV.forEach(function(n){
+  var a=document.createElement("a"); a.href="#"+n[0];
+  a.innerHTML='<i></i><span>'+n[1]+'</span>';
+  if(+n[0].slice(3)>=6) a.className="p2";
+  dn.appendChild(a);
+});
+var links=$$("#dotnav a"), pills=$$("#pillbar a"), cur=-1;
+if("IntersectionObserver" in window){
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(en){
+      if(en.isIntersecting){
+        var i=NAV.findIndex(function(n){return n[0]===en.target.id});
+        if(i>-1&&i!==cur){ cur=i;
+          links.forEach(function(a,j){a.classList.toggle("on",j===i)});
+          pills.forEach(function(a,j){a.classList.toggle("on",j===i)});
+        }
+      }
+    });
+  },{rootMargin:"-45% 0px -45% 0px"});
+  NAV.forEach(function(n){var el=document.getElementById(n[0]); if(el) io.observe(el)});
+}
+
+/* ================= 幕1 泵型判别器 ================= */
+var kksIn=$("#kksIn");
+function badgeRow(arr){ return arr.map(function(x){return '<span class="badge6">'+x+'</span>'}).join("") }
+function judgeKKS(v){
+  v=(v||"").trim().toUpperCase();
+  var m;
+  $("#kksEcho").textContent="KKS "+(v||"—");
+  if((m=v.match(/^20WSC10AP(\d{3})$/))){
+    var seg=+m[1];
+    if(seg>=10&&seg<=40){
+      $("#kksTitle").textContent="这是冷盐泵"; $("#kksType").textContent="冷盐泵(20WSC10AP0"+seg+")";
+      $("#kksDuty").textContent="充热:把冷罐 290°C 的盐送上吸热器";
+      $("#kksStator").innerHTML=badgeRow(["u1","u2","v1","v2","w1","w2"])+" 每相2测点·共6参数";
+    }else if(seg===50||seg===60){
+      $("#kksTitle").textContent="这是调温泵(不是冷盐泵!)"; $("#kksType").textContent="调温泵(20WSC10AP0"+seg+")";
+      $("#kksDuty").textContent="温度微调:自己不产热,把温度调到位";
+      $("#kksStator").innerHTML=badgeRow(["u","v","w"])+" 每相1测点·共3参数";
+    }else{
+      $("#kksTitle").textContent="段位不在 01x~06x"; $("#kksType").textContent="未知泵(段位 "+m[1]+")";
+      $("#kksDuty").textContent="—"; $("#kksStator").textContent="—";
+    }
+  }else if((m=v.match(/^20WSH20AP(\d{3})$/))){
+    var s2=+m[1];
+    if(s2>=10&&s2<=30){
+      $("#kksTitle").textContent="这是热盐泵"; $("#kksType").textContent="热盐泵(20WSH20AP0"+s2+")";
+      $("#kksDuty").textContent="发电:把热盐送去蒸汽发生系统";
+      $("#kksStator").innerHTML=badgeRow(["u","v","w"])+" 每相1测点·共3参数";
+    }else{ $("#kksTitle").textContent="段位不在 01x~03x"; $("#kksType").textContent="未知泵"; $("#kksDuty").textContent="—"; $("#kksStator").textContent="—"; }
+  }else{
+    $("#kksTitle").textContent="没认出这个位号";
+    $("#kksType").textContent="—"; $("#kksDuty").textContent="—"; $("#kksStator").textContent="—";
+  }
+}
+$("#kksGo").addEventListener("click",function(){judgeKKS(kksIn.value)});
+kksIn.addEventListener("keydown",function(e){ if(e.key==="Enter") judgeKKS(kksIn.value) });
+$("#kksTrap").addEventListener("click",function(){ kksIn.value="20WSC10AP050"; judgeKKS(kksIn.value); });
+
+/* ================= 幕2 凝固线滑块 ================= */
+var tmp=$("#tmp"), tmpOut=$("#tmpOut"), tState=$("#tState"), tCur=$("#tCursor"),
+    salt=$("#saltFill"), ice=$("#iceBar"), cry=$("#crysts"), pF=$("#pFast"), pS=$("#pSlow"),
+    pRot=$("#pumpRot"), frost=$("#pumpFrost"), mCur=$("#mCur"), tMargin=$("#tMargin"),
+    stOk=$("#stOk"), stWarn=$("#stWarn"), stBad=$("#stBad");
+function yOf(T){ return Math.max(104,Math.min(243,150+(T-240)*1.16)) }
+function heat(){
+  var T=+tmp.value; tmpOut.textContent=T+"°C";
+  tCur.setAttribute("cy",yOf(T));
+  var st = T>270?0 : T>240?1 : 2;
+  stOk.classList.toggle("on",st===0); stWarn.classList.toggle("on",st===1); stBad.classList.toggle("on",st===2);
+  tState.className="state-chip "+(st===0?"ok":st===1?"warn":"bad");
+  tState.textContent=st===0?"流动 · 全速":st===1?"糊化 · 减速析晶":"冻凝 · 泵停";
+  salt.setAttribute("fill", st===0?"#52C8FF":st===1?"#FFC94D":"#EDF4FB");
+  salt.setAttribute("fill-opacity", st===2?".4":".28");
+  cry.setAttribute("fill-opacity", st===0?0:st===1?".8":".9");
+  ice.setAttribute("fill-opacity", st===2?".55":0);
+  pF.style.display=st===0?"":"none";
+  pS.style.display=st===1?"":"none";
+  if(pRot) pRot.style.animationPlayState=st===2?"paused":"running";
+  frost.setAttribute("opacity", st===0?0:st===1?".35":".9");
+  var mg=T-240;
+  mCur.style.left=Math.max(0,Math.min(1,mg/50))*100+"%";
+  tMargin.textContent="距冻线 "+(mg>=0?"+":"")+mg+"°C";
+  tMargin.style.color=mg<50?"var(--gold)":"";
+}
+tmp.addEventListener("input",heat); heat();
+})();
+</script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= 幕5 相似定律 ================= */
+var rpm=$("#rpm"), rpmOut=$("#rpmOut"), lawSay=$("#lawSay");
+var colQ=$("#colQ"), colH=$("#colH"), colP=$("#colP"),
+    vQ=$("#vQ"), vH=$("#vH"), vP=$("#vP"),
+    ampBar=$("#ampBar"), ampTxt=$("#ampTxt"),
+    cQ=$("#cQ"), cH=$("#cH"), cP=$("#cP"),
+    dotQ=$("#dotQ"), dotH=$("#dotH"), dotP=$("#dotP");
+var X0=60,X1=920,Y0=160,Y1=20,N0=40,N1=120;
+function xOf(k){ return X0+(k*100-N0)/(N1-N0)*(X1-X0) }
+function yOfV(v){ return Y0+(Y1-Y0)*v }             /* v: 相对 k=1.2 的比例 */
+function buildCurves(){
+  var dQ="",dH="",dP="";
+  for(var n=N0;n<=N1;n+=2){
+    var k=n/100,x=xOf(k).toFixed(1);
+    dQ+=(dQ?" L":"M")+x+","+yOfV((k*100)/N1).toFixed(1);
+    dH+=(dH?" L":"M")+x+","+yOfV(Math.pow((k*100)/N1,2)).toFixed(1);
+    dP+=(dP?" L":"M")+x+","+yOfV(Math.pow((k*100)/N1,3)).toFixed(1);
+  }
+  cQ.setAttribute("d",dQ); cH.setAttribute("d",dH); cP.setAttribute("d",dP);
+}
+buildCurves();
+function law(){
+  var k=+rpm.value/100, Q=100*k, H=40*k*k, P=200*k*k*k;
+  rpmOut.textContent=rpm.value+"%";
+  colQ.style.height=Math.min(100,Q/112*100)+"%";
+  colH.style.height=Math.min(100,H/(40*1.12*1.12)*100)+"%";
+  colP.style.height=Math.min(100,P/(200*1.12*1.12*1.12)*100)+"%";
+  vQ.textContent=Q.toFixed(1)+" m³/h";
+  vH.textContent=H.toFixed(1)+" m";
+  vP.textContent=P.toFixed(0)+" kW";
+  var dp=Math.round((k*k*k-1)*100);
+  lawSay.textContent="转速 "+(rpm.value-100>=0?"+":"")+(rpm.value-100)+"% → 功率 "+(dp>=0?"+":"")+dp+"%";
+  var amp=Math.round(k*k*k*86);
+  ampBar.style.width=Math.min(100,amp)+"%";
+  var hot=amp>=95;
+  ampBar.style.background=hot?"var(--red)":amp>=80?"var(--gold)":"var(--green)";
+  ampTxt.textContent=hot?"≈"+amp+"% 额定 · 接近电机上限,定子要发热":"≈"+amp+"% 额定电流";
+  ampTxt.style.color=hot?"var(--red)":"";
+  var x=xOf(k);
+  dotQ.setAttribute("cx",x); dotQ.setAttribute("cy",yOfV(k/1.2));
+  dotH.setAttribute("cx",x); dotH.setAttribute("cy",yOfV(k*k/1.44));
+  dotP.setAttribute("cx",x); dotP.setAttribute("cy",yOfV(k*k*k/1.728));
+}
+rpm.addEventListener("input",law); law();
+
+/* ================= 幕6 测点病灶探照卡 ================= */
+var HOST=$("#pumpX6");
+(function(){
+  var src=document.getElementById("pumpX"), c=src.cloneNode(true);
+  c.removeAttribute("id");
+  c.querySelectorAll("[id]").forEach(function(el){el.removeAttribute("id")});
+  HOST.appendChild(c);
+  var svg=c; /* 960x560 坐标系一致 */
+  var NS="http://www.w3.org/2000/svg";
+  /* [x,y,type,name,tag,unit,meaning,ill]  type: di|ai|vib|st(定子,随泵型切换) */
+  var PTS=[
+    [404,46,"di","变频器启动","DI · 1","—","状态灯:亮=已发启动","指令链路异常时先看它"],
+    [404,68,"di","变频器停止","DI · 2","—","状态灯:亮=已停机","与转速反馈互证,防「假指令」"],
+    [404,90,"di","变频器报警","DI · 3","—","状态灯:亮=变频器告警","变频器过热/过流,转幕5看电流"],
+    [404,112,"di","变频器故障","DI · 4","—","状态灯:亮=故障停机","最高级状态灯,优先核处"],
+    [404,134,"di","变频器就绪","DI · 5","—","状态灯:亮=允许启动","长期不就绪=辅助系统问题"],
+    [556,46,"di","急停","DI · 6","—","状态灯:亮=急停回路动作","安全链路,误动须查明"],
+    [556,68,"di","远程控制 status","DI · 7","—","亮=允许远控","平台「允不允许远控」的答案"],
+    [556,118,"ai","转速指令","AI · 模拟量","rpm","DCS/运行人员要它转多快(平台只读该值)","指令长期不到位=调速链路问题"],
+    [556,140,"ai","转速反馈","AI · 模拟量","rpm","它实际转多快","反馈跟不上指令=传动打滑/扰动"],
+    [556,162,"ai","正转转速","AI · 模拟量","rpm","轴系实测转速","转速=0 但指令有值=泵未启动"],
+    [404,156,"ai","变频器电流","AI · 模拟量","A","它费多大劲","偏离转速预期=机械阻力变大"],
+    [452,120,"ai","推力轴承 X","AI · 模拟量","°C","立式泵轴向力去向","升高=推力瓦磨损/负荷异常"],
+    [508,120,"ai","推力轴承 Y","AI · 模拟量","°C","与 X 互为备份","X/Y 分岔=单向受力异常"],
+    [380,60,"vib","电机振动 X","AI · 振动","mm/s","电机径向振动","叶轮磨损/对中不良"],
+    [380,82,"vib","电机振动 Y","AI · 振动","mm/s","电机径向振动","同上,与X/Z五路合成看"],
+    [380,104,"vib","电机振动 Z","AI · 振动","mm/s","电机轴向振动","轴向力异常/推力瓦问题"],
+    [498,432,"vib","泵振动 X","AI · 振动","mm/s","泵体径向振动","水力失衡/叶轮磨损"],
+    [526,444,"vib","泵振动 Y","AI · 振动","mm/s","泵体径向振动","同上,五路合成才作数"],
+    [380,126,"ai","驱动端轴承温度","AI · 模拟量","°C","电机下端轴承","升高=润滑恶化"],
+    [380,148,"ai","非驱动端轴承温度","AI · 模拟量","°C","电机上端轴承","升高=润滑恶化/冷却差"],
+    [540,462,"ai","泵壳温度 1","AI · 模拟量","°C","泵体壁温","异常升高=内部摩擦/干磨"],
+    [566,478,"ai","泵壳温度 2","AI · 模拟量","°C","泵体壁温(备份)","与1互证,防单点误报"]
+  ];
+  var ST_COLD=[[446,58,"u1"],[470,58,"v1"],[494,58,"w1"],[446,86,"u2"],[470,86,"v2"],[494,86,"w2"]];
+  var ST_HOT=[[446,72,"u"],[470,72,"v"],[494,72,"w"]];
+  var MEAN={ "u1":"A相线圈温度1","u2":"A相线圈温度2","v1":"B相线圈温度1","v2":"B相线圈温度2","w1":"C相线圈温度1","w2":"C相线圈温度2","u":"A相线圈温度","v":"B相线圈温度","w":"C相线圈温度" };
+  var g=document.createElementNS(NS,"g");
+  g.setAttribute("id","hotspots");
+  function mk(p,isSt){
+    var grp=document.createElementNS(NS,"g");
+    grp.setAttribute("class","hl-dot"); grp.setAttribute("tabindex","0"); grp.setAttribute("role","button");
+    var nm=isSt?("定子线圈温度 "+p[2]):p[3];
+    grp.setAttribute("aria-label",nm);
+    var ring=document.createElementNS(NS,"circle");
+    ring.setAttribute("class","ring"); ring.setAttribute("cx",p[0]); ring.setAttribute("cy",p[1]);
+    ring.setAttribute("r",8); ring.setAttribute("fill","transparent"); ring.setAttribute("stroke","transparent");
+    grp.appendChild(ring);
+    if(!isSt&&p[2]==="vib"){
+      var pu=document.createElementNS(NS,"circle");
+      pu.setAttribute("class","pulse"); pu.setAttribute("cx",p[0]); pu.setAttribute("cy",p[1]); pu.setAttribute("r",7);
+      grp.appendChild(pu);
+    }
+    var dot=document.createElementNS(NS,"rect");
+    var isDI=!isSt&&p[2]==="di";
+    if(isDI){ dot.setAttribute("x",p[0]-5); dot.setAttribute("y",p[1]-5); dot.setAttribute("width",10); dot.setAttribute("height",10); dot.setAttribute("rx",2); }
+    else{ dot.setAttribute("x",p[0]-5); dot.setAttribute("y",p[1]-5); dot.setAttribute("width",10); dot.setAttribute("height",10); dot.setAttribute("rx",5); }
+    dot.setAttribute("fill",isDI?"#52C8FF":"#FF9D45");
+    dot.setAttribute("stroke","#0A1422"); dot.setAttribute("stroke-width","1.5");
+    grp.appendChild(dot);
+    function show(){
+      var unit=!isSt?p[5]:"°C", meanTxt=!isSt?p[6]:MEAN[p[2]], ill=!isSt?p[7]:"升高=电机过载/冷却变差";
+      $("#lesCard").innerHTML=
+        '<h4>'+nm+'</h4><div class="kk">'+(isSt?("STATOR · "+p[2]):p[4])+'</div><dl>'+
+        '<dt>类型</dt><dd>'+(isDI?"数字量(状态灯)":isSt?"模拟量·定子":(p[2]==="vib"?"模拟量·振动":"模拟量"))+'</dd>'+
+        '<dt>单位</dt><dd>'+unit+'</dd>'+
+        '<dt>它量什么</dt><dd>'+meanTxt+'</dd>'+
+        '<dt>升高的含义</dt><dd>'+ill+'</dd></dl>';
+    }
+    grp.addEventListener("click",show);
+    grp.addEventListener("focus",show);
+    return grp;
+  }
+  PTS.forEach(function(p){ g.appendChild(mk(p,false)) });
+  var stG=document.createElementNS(NS,"g"); stG.setAttribute("id","statorDots");
+  ST_COLD.forEach(function(p){ stG.appendChild(mk([p[0],p[1],p[2]],true)) });
+  g.appendChild(stG);
+  svg.appendChild(g);
+  if(RM){ try{svg.pauseAnimations()}catch(e){} }
+  /* 泵型页签 */
+  $$(".hot-pick .hp").forEach(function(b){
+    b.addEventListener("click",function(){
+      $$(".hot-pick .hp").forEach(function(x){x.classList.remove("on")});
+      b.classList.add("on");
+      var hot=b.dataset.pump==="hot";
+      stG.innerHTML="";
+      (hot?ST_HOT:ST_COLD).forEach(function(p){ stG.appendChild(mk([p[0],p[1],p[2]],true)) });
+      $("#statorBox").innerHTML= hot
+        ? '<span class="chip"><i style="background:var(--cold)"></i>调温/热盐泵:每相 1 测点</span>'+["u","v","w"].map(function(x){return '<span class="badge6">'+x+'</span>'}).join("")+" 共3参数 · 整泵 27 测点(7DI+20AI,含定子3)"
+        : '<span class="chip"><i style="background:var(--hot)"></i>冷盐泵:每相 2 测点</span>'+["u1","u2","v1","v2","w1","w2"].map(function(x){return '<span class="badge6">'+x+'</span>'}).join("")+" 共6参数 · 整泵 30 测点(7DI+23AI)";
+    });
+  });
+  $("#statorBox").innerHTML="";
+  document.querySelector('.hot-pick .hp[data-pump="cold"]').click();
+})();
+
+/* ================= 幕7 网闸单向阀 ================= */
+var tsNow=$("#tsNow"), paused=false, timer=null;
+function fmt(d){ function p(n){return (n<10?"0":"")+n} return p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds()) }
+function tick(){ tsNow.textContent=fmt(new Date()) }
+timer=setInterval(tick,1000); tick();
+var plSvg=document.getElementById("pipeLine");
+var pauseBtn=$("#pauseBtn"), frozen=$("#tsFrozen");
+pauseBtn.addEventListener("click",function(){
+  paused=!paused;
+  if(paused){ clearInterval(timer); frozen.style.display=""; pauseBtn.textContent="恢复链路";
+    try{plSvg.pauseAnimations()}catch(e){}
+  }else{ timer=setInterval(tick,1000); frozen.style.display="none"; pauseBtn.textContent="暂停链路";
+    if(!RM){ try{plSvg.unpauseAnimations()}catch(e){} }
+  }
+});
+var revBtn=$("#revBtn"), revArrow=$("#revArrow"), gateX=$("#gateX"), gateMsg=$("#gateMsg"), busy=false;
+revBtn.addEventListener("click",function(){
+  if(busy) return; busy=true;
+  revArrow.setAttribute("opacity","1");
+  var d=392-470; /* -78 */
+  revArrow.style.transition="none"; revArrow.style.transform="translateX(140px)";
+  void revArrow.getBoundingClientRect();
+  revArrow.style.transition="transform .7s ease-in";
+  revArrow.style.transform="translateX(0)";
+  setTimeout(function(){
+    gateX.setAttribute("opacity","1");
+    gateMsg.style.display=""; gateMsg.className="state-chip bad";
+    gateMsg.textContent="网闸单向转发——平台对现场只读";
+    setTimeout(function(){
+      revArrow.setAttribute("opacity","0"); gateX.setAttribute("opacity","0");
+      gateMsg.style.display="none"; busy=false;
+    },1600);
+  },720);
+});
+})();
+</script>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+var $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= 幕8 振动五路合成 ================= */
+var DEF=[2.0,2.1,1.8,2.4,2.2], chans=$$("#chans input"), outs=$$("#chans output"),
+    cBar=$("#cBar"), cDot=$("#cDot"), vJudge=$("#vJudge"),
+    card=$("#alarmCard"), cOpen=$("#cOpen"), cSev=$("#cSev"),
+    dOpen=$("#dOpen"), dSev=$("#dSev"),
+    kb=$("#kbEntry"), stamps=$$("#alarmCard .stamp");
+var alarmsOpen=0, alarmsSev=0, closed=false, latched=false, curSev=false;
+function paint(n){
+  outs[n].textContent=(+chans[n].value).toFixed(1);
+}
+function river(){
+  var sum=0; chans.forEach(function(c,i){paint(i); sum+=+c.value});
+  var v=sum/5, trig=v>=4.7, sev=v>7.1;
+  var col = sev?"var(--red)": trig?"var(--gold)":"var(--green)";
+  cBar.setAttribute("width",Math.max(0,Math.min(1,v/10))*432);
+  cBar.setAttribute("fill",col);
+  cDot.setAttribute("cx",434+Math.max(0,Math.min(1,v/10))*432);
+  vJudge.className="state-chip "+(sev?"bad":trig?"warn":"ok");
+  vJudge.textContent="合成 "+v.toFixed(1)+" mm/s · "+(sev?"严重报警!":trig?"预警触发":"不触发");
+  if(trig&&!closed&&card.classList.contains("hidden")) openAlarm(sev,v);
+  if(!trig&&latched){ closed=false; latched=false; card.classList.add("hidden"); card.style.borderColor=""; resetStamps(); setCnt(0,0); }
+}
+function setCnt(o,s){ alarmsOpen=o; alarmsSev=s;
+  cOpen.textContent=o; cSev.textContent=s; dOpen.textContent=o; dSev.textContent=s; }
+function resetStamps(){ var L=["① 未处理","② 确认","③ 恢复","③ 忽略"];
+  stamps.forEach(function(st,i){ st.classList.remove("done","s1","s2","s3"); st.textContent=L[i]; st.disabled=false; });
+  kb.classList.remove("show"); }
+function openAlarm(sev,v){
+  curSev=sev; latched=true;
+  card.classList.remove("hidden"); resetStamps(); setCnt(1,sev?1:0);
+  card.style.borderColor=sev?"":"rgba(255,201,77,.55)";
+  var h4=card.querySelector("h4");
+  h4.textContent=sev?"振动共振复合报警":"振动共振复合预警";
+  h4.style.color=sev?"":"var(--gold)";
+  card.querySelector(".meta").textContent="20WSC10AP010 · 等级:"+(sev?"严重":"预警")+" · 触发:五路合成 "+v.toFixed(1)+" mm/s "+(sev?"> 7.1 严重判据带":"≥ 4.7 预警判据带(未达严重 7.1)")+"(教学演示)";
+  stamps.forEach(function(st){ st.disabled=false });
+}
+stamps.forEach(function(st){
+  st.addEventListener("click",function(){
+    if(st.classList.contains("done")) return;
+    var step=st.dataset.step;
+    if(step==="1"){ st.classList.add("done","s1"); st.textContent="① 未处理 ✓"; }
+    if(step==="2"){ if(!stamps[0].classList.contains("done")) return;
+      st.classList.add("done","s2"); st.textContent="② 已确认"; setCnt(0,curSev?1:0); kb.classList.add("show"); }
+    if(step==="3a"||step==="3b"){ if(!stamps[1].classList.contains("done")) return;
+      st.classList.add("done","s3"); st.textContent=step==="3a"?"③ 已恢复 ✓":"③ 已忽略 ✓";
+      if(step==="3a"){ var o=$$("#alarmCard .stamp")[3]; o.disabled=true; }
+      if(step==="3b"){ var r=$$("#alarmCard .stamp")[2]; r.disabled=true; }
+      setCnt(0,0); closed=true;
+    }
+  });
+});
+chans.forEach(function(c){ c.addEventListener("input",river) });
+$("#glitchBtn").addEventListener("click",function(){
+  var c=chans[0], old=DEF[0];
+  c.value=9.6; river();
+  setTimeout(function(){ c.value=old; river(); },800);
+});
+$("#resonBtn").addEventListener("click",function(){ chans.forEach(function(c){c.value=6.2}); river(); });
+$("#resetBtn").addEventListener("click",function(){ chans.forEach(function(c,i){c.value=DEF[i]}); river(); });
+river();
+
+/* ================= 幕9 健康分计算器 ================= */
+var DIMS=[
+ {id:"dV",name:"振动 P95",unit:"mm/s",min:0,max:12,step:0.1,def:3.2,t:7.1,w:30,f:1},
+ {id:"dB",name:"轴承温度",unit:"°C",min:30,max:120,step:1,def:62,t:95,w:25,f:0},
+ {id:"dS",name:"定子温度",unit:"°C",min:40,max:180,step:1,def:88,t:140,w:20,f:0},
+ {id:"dC",name:"转速变动系数 cv",unit:"",min:0,max:0.4,step:0.005,def:0.05,t:0.15,w:15,f:3},
+ {id:"dI",name:"电流偏差",unit:"%",min:0,max:30,step:0.5,def:4,t:10,w:10,f:1}
+];
+function dimScore(v,t){ if(v<=0.6*t) return 100-20*v/(0.6*t); if(v<=t) return 80-80*(v-0.6*t)/(0.4*t); return 0 }
+function grade(s){ return s>=80?["优","#58D6A9"]:s>=60?["良","#52C8FF"]:s>=40?["注意","#FFC94D"]:["危险","#FF6B6B"] }
+var dimsBox=$("#dims"), sliders=[], outs9=[], scs=[], dots=[], gpaths=[];
+DIMS.forEach(function(d){
+  var row=document.createElement("div"); row.className="dim-row";
+  row.innerHTML='<div class="dn">'+d.name+'<br><span class="th">阈值 t = '+d.t+' '+(d.unit||"")+' · 权重 '+d.w+'</span></div>'+
+    '<div><input type="range" min="'+d.min+'" max="'+d.max+'" step="'+d.step+'" value="'+d.def+'">'+
+    '<svg viewBox="0 0 240 36" style="width:100%;height:34px;margin-top:2px" aria-hidden="true">'+
+      '<line x1="8" y1="28" x2="232" y2="28" stroke="rgba(237,244,251,.2)"/>'+
+      '<path class="gp" d="" fill="none" stroke="rgba(237,244,251,.45)" stroke-width="2"/>'+
+      '<circle class="k1" r="3.5" fill="#FFC94D" stroke="#0A1422" stroke-width="1.5"/>'+
+      '<circle class="k2" r="3.5" fill="#FF6B6B" stroke="#0A1422" stroke-width="1.5"/>'+
+      '<circle class="wp" r="5" fill="#fff" stroke="#0A1422" stroke-width="2"/>'+
+    '</svg></div>'+
+    '<output class="mono">'+d.def.toFixed(d.f)+' '+d.unit+'</output>'+
+    '<span class="sc">—</span>';
+  dimsBox.appendChild(row);
+  var inp=row.querySelector("input");
+  sliders.push(inp); outs9.push(row.querySelector("output")); scs.push(row.querySelector(".sc"));
+  dots.push({k1:row.querySelector(".k1"),k2:row.querySelector(".k2"),wp:row.querySelector(".wp")});
+  gpaths.push(row.querySelector(".gp"));
+  inp.addEventListener("input",calc9);
+});
+function xOf9(v,t){ return 8+Math.max(0,Math.min(1.2*t,v))/(1.2*t)*224 }
+function yOf9(s){ return 28-24*s/100 }
+DIMS.forEach(function(d,i){
+  var p="M"+xOf9(0,d.t).toFixed(1)+","+yOf9(100).toFixed(1)+
+        " L"+xOf9(0.6*d.t,d.t).toFixed(1)+","+yOf9(80).toFixed(1)+
+        " L"+xOf9(d.t,d.t).toFixed(1)+","+yOf9(0).toFixed(1)+
+        " L"+xOf9(1.2*d.t,d.t).toFixed(1)+","+yOf9(0).toFixed(1);
+  gpaths[i].setAttribute("d",p);
+  dots[i].k1.setAttribute("cx",xOf9(0.6*d.t,d.t)); dots[i].k1.setAttribute("cy",yOf9(80));
+  dots[i].k2.setAttribute("cx",xOf9(d.t,d.t)); dots[i].k2.setAttribute("cy",yOf9(0));
+});
+function calc9(){
+  var total=0, anyNA=$("#naT").checked;
+  DIMS.forEach(function(d,i){
+    var v=+sliders[i].value, s=dimScore(v,d.t);
+    outs9[i].textContent=v.toFixed(d.f)+" "+d.unit;
+    scs[i].textContent=Math.round(s);
+    dots[i].wp.setAttribute("cx",xOf9(v,d.t)); dots[i].wp.setAttribute("cy",yOf9(s));
+    total+=s*d.w/100;
+  });
+  var na=anyNA;
+  sliders.forEach(function(s){s.disabled=na});
+  var tn=$("#hTotal"), tg=$("#hGrade");
+  if(na){ tn.textContent="—"; tn.style.color="var(--ink-45)";
+    tg.textContent="数据不足 · 不硬打分"; tg.style.background="var(--panel-hi)"; tg.style.color="var(--ink-45)";
+    $("#mcAvg").textContent="数据不足"; $("#mcRank").textContent="—";
+  }else{
+    tn.textContent=total.toFixed(1);
+    var g=grade(total);
+    tn.style.color=g[1];
+    tg.textContent=g[0]+" 档"; tg.style.background=g[1]+"22"; tg.style.color=g[1];
+    $("#mcAvg").textContent=total.toFixed(1); $("#mcAvg").style.color=g[1];
+    var others=[92,90,88,86,83,78,64,52], rank=1; others.forEach(function(o){ if(o>total) rank++ });
+    $("#mcRank").textContent="第 "+rank+" / 9";
+    var base={"优":5,"良":2,"注意":1,"危险":0}; base[g[0]]++;
+    $("#mcDist").innerHTML='<span style="color:var(--green)">优'+base["优"]+'</span> · <span style="color:var(--cold)">良'+base["良"]+'</span> · <span style="color:var(--gold)">注意'+base["注意"]+'</span> · <span style="color:var(--red)">危险'+base["危险"]+'</span>';
+  }
+  var v0=+sliders[0].value;
+  $("#spikeInfo").textContent=$("#spikeT").checked?"毛刺注入:原始序列峰值 "+(v0*3+2).toFixed(1)+" mm/s → P95 仍 "+v0.toFixed(1)+" mm/s,总分纹丝不动":"";
+}
+$("#spikeT").addEventListener("change",calc9);
+$("#naT").addEventListener("change",calc9);
+$$("#hlab [data-preset]").forEach(function(b){
+  b.addEventListener("click",function(){
+    var P={ok:[2.5,55,80,0.04,3],warn:[5.8,84,110,0.09,7],bad:[8.5,100,150,0.18,16]}[b.dataset.preset];
+    P.forEach(function(v,i){ sliders[i].value=v }); calc9();
+  });
+});
+calc9();
+
+/* ================= 幕10 大屏导览 ================= */
+var ANNO={
+ a1:["像问「家里几口人上班」——分泵型点名:冷盐 4、调温 2、热盐 3,谁没来一目了然。","运行/总数:泵组运行状态聚合,分泵型统计"],
+ a2:["像门口的「待办便签」:未处理是还没人接的,严重是要立刻动手的——闭环入口在这两个数。","未处理/严重告警:报警记录按状态聚合(幕08)"],
+ a3:["九台泵体温的平均数;单台发热要看排名,全站发热要看它。","平均健康分:各泵健康分均值,按日滚动(幕09)"],
+ a4:["充电宝电量条:冷罐 4.99m、热罐 8.63m 折算成储热百分比。","储热率:冷/热罐液位派生"],
+ a5:["航站楼屏上那行大字「现在能起飞吗」——先看有没有冻凝风险,再看几组泵在转。","运行模式:泵组状态+母管温度,按 冻凝>双工>充热>放热>待机 派生,附数据截至"],
+ a6:["班级成绩段位统计:优几个、良几个,一眼看出有没有掉队的。","健康等级分布:按 80/60/40 档位计数(幕09)"],
+ a7:["成绩单排名:谁在最前面,谁逼近红线——AP040 这格红了就该去幕08 看它的警。","全泵健康排名:九台泵按分数排序"],
+ a8:["一条滚动的时间线:谁响了、谁恢复了,像候机屏的「延误/登机」列表。","告警流:报警记录实时滚动(幕08)"],
+ a9:["AI 的交作业角:今天分打完了、巡逻发现了什么线索——但确认键在人手里。","AI 诊断动态:按日评分+每小时主动发现"],
+ a10:["盯人模式:一台泵的 30 个体征一屏装下,6 关键 + 12 温度 + 5 振动 + 7 数字量。","焦点泵:单泵 30 测点分组(幕06)"],
+ a11:["体检报告的「近30天趋势」:一次毛刺是点,趋势才是线。","30天时间轴:历史聚合曲线(幕07 的数据都在这条线里)"]
+};
+var anno=$("#anno"), dash=$(".dash");
+$$(".dash .dcell").forEach(function(c){
+  function show(){ var a=ANNO[c.dataset.anno]; if(!a) return;
+    anno.innerHTML='<span class="bi">打个比方:</span>'+a[0]+'<br><span class="tm">对应术语 → '+a[1]+'</span>';
+    anno.classList.add("show"); }
+  c.addEventListener("mouseenter",show); c.addEventListener("click",show);
+});
+$$(".dash .ab").forEach(function(b){
+  b.addEventListener("click",function(e){
+    e.stopPropagation();
+    var el=document.getElementById(b.dataset.go);
+    if(el) el.scrollIntoView({behavior:RM?"auto":"smooth",block:"start"});
+  });
+});
+/* 运行模式判定器 */
+$$("#rankBars .b i").forEach(function(i){ i.style.width=(parseFloat(i.style.width)*0.66)+"%" });
+var mjC=$("#mjCold"), mjH=$("#mjHot"), mjA=$("#mjAdj"), mjT=$("#mjT"), mjTo=$("#mjTo"),
+    dMode=$("#dMode"), dTs=$("#dTs"), mjStrip=$("#mjStrip");
+var MODE_CLS={"冻凝风险":"bad","双工":"warn","充热中":"ok","放热中":"ok","待机":""};
+function mode(){
+  var T=+mjT.value; mjTo.textContent=T+"°C";
+  var c=mjC.checked,h=mjH.checked;
+  var m = T<270?"冻凝风险" : (c&&h)?"双工" : c?"充热中" : h?"放热中" : "待机";
+  dMode.textContent=m;
+  dMode.className="state-chip "+MODE_CLS[m];
+  if(m==="待机"){ dMode.style.background="var(--panel-hi)"; dMode.style.color="var(--ink-66)"; dMode.style.border="1px solid var(--line)"; }
+  else{ dMode.style.background=""; dMode.style.color=""; dMode.style.border=""; }
+  $$("#mjStrip .st").forEach(function(s){
+    var on=s.dataset.m===m; s.classList.toggle("on",on);
+    if(on&&m==="待机"){ s.style.background="var(--panel-hi)"; s.style.color="var(--ink)"; s.style.borderColor="var(--line)"; }
+    else { s.style.background=""; s.style.color=""; s.style.borderColor=""; }
+  });
+}
+[mjC,mjH,mjA].forEach(function(x){x.addEventListener("change",mode)});
+mjT.addEventListener("input",mode); mode();
+setInterval(function(){ dTs.textContent=(function(){function p(n){return (n<10?"0":"")+n}var d=new Date();return p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())})() },1000);
+})();
+</script>
+</body>
+</html>

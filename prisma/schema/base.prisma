@@ -1,0 +1,42 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../../generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum DeviceStatus {
+  ENABLED
+  DISABLED
+}
+
+enum PumpType {
+  COLD_SALT
+  TEMPERING
+  HOT_SALT
+}
+
+enum PropertyDataType {
+  BOOL
+  DOUBLE
+}
+
+enum AlarmLevel {
+  WARNING
+  SERIOUS
+}
+
+enum AlarmStatus {
+  UNHANDLED
+  ACKNOWLEDGED
+  RECOVERED
+  IGNORED
+}

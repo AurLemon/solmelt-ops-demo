@@ -1,0 +1,57 @@
+{
+	"name": "solmelt-ops",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@11.24.0",
+	"engines": {
+		"node": ">=24 <25",
+		"pnpm": ">=11.24.0 <12"
+	},
+	"scripts": {
+		"dev": "nuxt dev",
+		"build": "nuxt build",
+		"preview": "nuxt preview",
+		"postinstall": "nuxt prepare && pnpm db:generate",
+		"typecheck": "nuxt typecheck",
+		"lint": "eslint .",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"db:generate": "prisma generate",
+		"db:validate": "prisma validate",
+		"db:migrate:dev": "prisma migrate dev",
+		"db:migrate:deploy": "prisma migrate deploy",
+		"db:migrate:status": "prisma migrate status",
+		"db:seed": "prisma db seed",
+		"db:studio": "prisma studio",
+		"env:check": "node tooling/check-environment.mjs",
+		"scope:check": "node tooling/check-scope.mjs",
+		"verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm db:validate && pnpm build",
+		"pr:check": "pnpm scope:check && pnpm verify"
+	},
+	"dependencies": {
+		"@iconify-json/lucide": "1.2.132",
+		"@nuxt/ui": "4.11.1",
+		"@prisma/adapter-mariadb": "7.10.0",
+		"@prisma/client": "7.10.0",
+		"bcryptjs": "3.0.3",
+		"dotenv": "17.4.2",
+		"echarts": "6.1.0",
+		"fflate": "0.8.3",
+		"jose": "6.2.12",
+		"mariadb": "3.5.4",
+		"nuxt": "4.5.2",
+		"svg-captcha": "1.4.0",
+		"zod": "4.6.5"
+	},
+	"devDependencies": {
+		"@nuxt/eslint": "1.17.0",
+		"@types/node": "24.13.5",
+		"eslint": "10.10.0",
+		"prettier": "3.9.6",
+		"prisma": "7.10.0",
+		"tsx": "4.23.13",
+		"typescript": "6.0.3",
+		"vue-tsc": "3.3.11"
+	}
+}

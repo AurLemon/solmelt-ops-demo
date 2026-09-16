@@ -1,0 +1,68 @@
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique @db.VarChar(64)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  displayName  String     @map("display_name") @db.VarChar(100)
+  roleId       Int        @map("role_id")
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  deletedAt    DateTime?  @map("deleted_at")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@index([roleId])
+  @@index([status, deletedAt])
+  @@map("users")
+}
+
+model Role {
+  id        Int        @id @default(autoincrement())
+  code      String     @unique @db.VarChar(32)
+  name      String     @db.VarChar(64)
+  remark    String?    @db.VarChar(255)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  users     User[]
+  menus     RoleMenu[]
+
+  @@map("roles")
+}
+
+model Menu {
+  id             Int        @id @default(autoincrement())
+  parentId       Int?       @map("parent_id")
+  name           String     @db.VarChar(64)
+  path           String     @db.VarChar(128)
+  permissionCode String?    @unique @map("permission_code") @db.VarChar(64)
+  icon           String?    @db.VarChar(64)
+  sort           Int        @default(0)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+  parent         Menu?      @relation("MenuTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children       Menu[]     @relation("MenuTree")
+  roles          RoleMenu[]
+
+  @@index([parentId, sort])
+  @@map("menus")
+}
+
+model RoleMenu {
+  roleId Int  @map("role_id")
+  menuId Int  @map("menu_id")
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  menu   Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, menuId])
+  @@map("role_menus")
+}
+
+model Captcha {
+  key        String   @id @db.VarChar(64)
+  answerHash String   @map("answer_hash") @db.VarChar(255)
+  expiresAt  DateTime @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("captchas")
+}
