@@ -1,5 +1,5 @@
 import type { DeviceStatus } from './contracts/device'
-import type { AlarmLevel, AlarmStatus, TelemetryValue } from './contracts/telemetry'
+import type { AlarmLevel, TelemetryValue } from './contracts/telemetry'
 
 export interface DeviceCreatedEvent {
 	deviceId: string
@@ -31,19 +31,11 @@ export interface AlarmCreatedEvent {
 	occurredAt: string
 }
 
-export interface AlarmStatusChangedEvent {
-	alarmId: string
-	previousStatus: AlarmStatus
-	status: AlarmStatus
-	handledAt: string
-}
-
 export interface DomainEventMap {
 	'device.created': DeviceCreatedEvent
 	'device.status.changed': DeviceStatusChangedEvent
 	'telemetry.reported': TelemetryReportedEvent
 	'alarm.created': AlarmCreatedEvent
-	'alarm.status.changed': AlarmStatusChangedEvent
 }
 
 export type DomainEventName = keyof DomainEventMap

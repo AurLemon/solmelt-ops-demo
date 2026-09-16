@@ -14,7 +14,8 @@ Nuxt 页面与 server/api 适配层
 领域 Service ──提交成功──▶ Typed EventBus
         │                         │
         ▼                         ▼
-Prisma / MySQL          最新值、报警等事件处理器
+Prisma / MySQL          审计、通知等后续 Handler
+报告、属性值、最新值、报警
         │
         ▼
 Dashboard 只读聚合
@@ -39,12 +40,12 @@ Dashboard 只读聚合
 | --------- | --------------------------------------------------------- | ----------------------------------------- | -------------------------- |
 | Auth      | User、Role、Menu、Captcha                                 | 后续按需扩展                              | 无跨领域依赖               |
 | Device    | Product、ProductProperty、Device                          | `device.created`、`device.status.changed` | DeviceLatestValue 只读投影 |
-| Telemetry | TelemetryReport、TelemetryValue、DeviceLatestValue、Alarm | `telemetry.reported`、`alarm.*`           | 设备存在性与状态只读契约   |
+| Telemetry | TelemetryReport、TelemetryValue、DeviceLatestValue、Alarm | `telemetry.reported`、`alarm.created`     | 设备存在性与状态只读契约   |
 | Dashboard | 无核心写模型                                              | 无                                        | 设备、最新值和报警只读聚合 |
 
 ## 失败边界
 
 - 数据库写入失败时不得发布成功事件。
-- 事件处理失败必须让当前上报请求失败或记录为明确可重试状态，不能静默吞掉。
+- Telemetry 的报告、属性值、最新值和报警在同一 transaction 内提交；后续事件 Handler 失败不得否定已成功的上报，必须由其自身明确记录或重试，不能静默吞掉。
 - API 不向客户端暴露堆栈、数据库密码或内部文件路径。
 - 数据延迟不等于设备故障；页面保留最后一次真实值并单独显示延迟。
