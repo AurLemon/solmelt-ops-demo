@@ -20,19 +20,28 @@ Node.js 使用官网的 24 LTS 安装包。pnpm 11 与 Node 24 兼容；仓库�
 
 Docker Desktop 是所有成员的推荐路径。Compose 会自动拉取 `mysql:8.4`，无需先执行 `docker pull`。
 
+### 配置归属与团队同步
+
+仓库提交的 `.env.example` 由组长维护，只保存可公开的本地开发默认值；每位成员都必须在自己电脑上复制为 `.env`，并只在本机设置 `JWT_SECRET`。`.env`、数据库密码、Docker 数据卷和 Seed 后的数据均不得提交或在成员之间传输。
+
+四个领域使用各自电脑上的同一套 Docker Compose 数据库，不共享某一位成员的 MySQL 实例。数据库负责人可以提交 Prisma Schema、migration、Seed 或 Docker 配置的代码变更；其他成员拉取这些代码后，在本机重新执行迁移、Seed 和状态检查即可。数据库业务实现尚未完成时，不影响成员先完成通用环境安装。
+
 ```bash
 cp .env.example .env
 # 生成随机值后，手动替换 .env 中的 JWT_SECRET
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 pnpm env:check
 pnpm install --frozen-lockfile
+docker compose config --quiet
 docker compose up -d --wait
+docker compose ps
+docker compose exec -T mysql sh -c 'mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD" --silent'
 pnpm db:migrate:deploy
 pnpm db:seed
 pnpm db:migrate:status
 ```
 
-如果本机 Docker Compose 不支持 `--wait`，先执行 `docker compose up -d`，再以 `docker compose ps` 确认 `solmelt-mysql` 为 `healthy`，最后执行迁移。不得在数据库健康前反复执行迁移或删除数据卷。
+如果本机 Docker Compose 不支持 `--wait`，先执行 `docker compose up -d`，再以 `docker compose ps` 确认 `mysql` 服务为 `healthy`，最后执行迁移。不得在数据库健康前反复执行迁移或删除数据卷。
 
 Compose 的初始化脚本只会在空数据卷第一次初始化时执行；容器显示 `healthy` 只代表 MySQL 可连接，不代表已有数据卷中的账号、密码和 shadow database 权限已同步。遇到账号或权限异常时先查看 `docker compose logs mysql` 和 `.env`，不要直接执行 `docker compose down -v`。
 

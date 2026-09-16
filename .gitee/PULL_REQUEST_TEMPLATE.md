@@ -20,8 +20,8 @@
 
 ## 验证
 
-- [ ] `pnpm format`
-- [ ] `pnpm pr:check`
+- [ ] 已仅格式化本领域允许目录，未改写其他 Layer 或公共文件
+- [ ] `pnpm pr:check` 已通过（包含生产 Build；未通过不得提交 PR）
 - [ ] 已按领域验收动作手动演示
 
 ## Review 结果

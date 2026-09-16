@@ -46,7 +46,9 @@ const allowedPrefixes = scopeRules[branch]
 
 if (!allowedPrefixes) {
 	if (branch === 'main' || branch.startsWith('chore/') || branch.startsWith('contract/')) {
-		console.log(`scope:check 跳过集成分支 ${branch}`)
+		console.log(
+			`scope:check 跳过范围校验：${branch} 仅可由组长按 Gitee 审批流程维护，不能据此视为已获授权。`,
+		)
 		process.exit(0)
 	}
 

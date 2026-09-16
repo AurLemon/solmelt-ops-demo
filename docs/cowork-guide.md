@@ -15,13 +15,12 @@
 
 ### 组长发放前：只执行一次
 
-组长必须先把已验证的 `main`、`v0.1.0-baseline` 标签和四个领域分支推送到 Gitee；确认 Gitee 上能看到 `main`、`feat/auth`、`feat/device`、`feat/telemetry`、`feat/dashboard` 后，才把 clone URL 发给成员。当前仓库没有远端时，先在本机核对分支和标签，配置好 Gitee remote 后再推送；禁止用 force push 覆盖远端已有初始化提交。
+组长必须先把已验证的 `main` 和四个领域分支推送到 Gitee；确认 Gitee 上能看到 `main`、`feat/auth`、`feat/device`、`feat/telemetry`、`feat/dashboard` 后，才把 clone URL 发给成员。当前仓库没有远端时，先在本机核对分支，配置好 Gitee remote 后再推送；禁止用 force push 覆盖远端已有初始化提交。
 
 ```bash
 git branch --list
-git tag --list v0.1.0-baseline
 git remote -v
-# 由组长在确认远端历史后配置 origin，并正常推送 main、标签和四个 feat 分支
+# 由组长在确认远端历史后配置 origin，并正常推送 main 和四个 feat 分支
 ```
 
 ### 成员克隆与启动
@@ -37,7 +36,10 @@ cp .env.example .env
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 pnpm env:check
 pnpm install --frozen-lockfile
+docker compose config --quiet
 docker compose up -d --wait
+docker compose ps
+docker compose exec -T mysql sh -c 'mysqladmin ping -h 127.0.0.1 -u root -p"$MYSQL_ROOT_PASSWORD" --silent'
 pnpm db:migrate:deploy
 pnpm db:seed
 pnpm db:migrate:status
@@ -45,16 +47,22 @@ pnpm db:migrate:status
 
 推荐使用 VS Code Source Control 查看变更，但提交前仍执行仓库提供的检查命令。
 
+每位成员都在自己的电脑上运行 Docker MySQL；不要等待其他成员导出数据库，也不要把 `.env`、数据库密码或 Docker 数据卷提交到 Gitee。数据库结构、迁移、Seed 或 Docker 配置由组长/指定负责人以代码形式 push；全体成员 pull 主线后，在本机执行 `pnpm db:migrate:deploy`、`pnpm db:seed`、`pnpm db:migrate:status` 并反馈结果。
+
 ## 每次工作
 
 ```bash
 git switch <本组固定分支>
-git status
+git fetch origin
+git status --short
 git remote -v
-# 若 git status 有输出，先处理本地改动，不要继续 pull
-git pull origin <本组固定分支>
-# 完成一个可说明的小任务
-pnpm format
+# 若有输出，先让 Agent 报告本地改动，不要继续同步
+# 组长更新版本、提示词或公共文档后，工作区为空时执行：
+git pull --no-rebase origin main
+# 只同步同组成员的分支时才执行：
+git pull --ff-only origin <本组固定分支>
+# 完成一个可说明的小任务；仅格式化本领域允许目录
+pnpm exec prettier --write <本领域允许目录>
 pnpm pr:check
 git status
 git diff --check
@@ -85,17 +93,17 @@ git push origin <本组固定分支>
 2. 完整填写 PR 模板，明确 AI 工具、人工修改和验证结果。
 3. 同组另一位成员先 Review。
 4. 使用新 AI 会话按 `docs/ai-review.md` 做只读 Review。
-5. 组长本地执行 `pnpm pr:check` 并按 auth → device → telemetry → dashboard 顺序集成。
+5. 组长本地执行 `pnpm pr:check`（其中生产 Build 必须通过）并按 auth → device → telemetry → dashboard 顺序集成；未通过不得合并。
 6. 使用 merge commit，保留成员提交记录。
 
-其他组完成合并后，在自己的 feat 分支执行：
+其他组完成合并后，组员不需要手动理解 fetch/merge；在自己的 feat 分支直接让 Agent 执行：
 
 ```bash
-git fetch origin
-git merge origin/main
+git status --short
+git pull --no-rebase origin main
 ```
 
-解决冲突后重新执行 `pnpm pr:check`。不使用 force push，不要求成员进行 rebase 或 cherry-pick。
+仅当 `git status --short` 没有输出时执行。组员让 Agent 负责 Git 同步，但 Agent 不得覆盖、删除、reset、clean、stash 或擅自提交已有工作区内容；有本地改动时先报告。发生冲突时列出冲突文件和双方差异，询问组员自己负责的内容应保留哪一侧，确认后才能处理；处理后重新执行 `pnpm pr:check`。不使用 force push，不要求成员进行 rebase 或 cherry-pick。
 
 ## Contract Change
 
@@ -107,11 +115,11 @@ git merge origin/main
 - 兼容与迁移方案；
 - 可复现证据。
 
-组长确认后在 `contract/<slug>` 分支集中修改并重新发布契约。
+组长确认后在 `contract/<slug>` 分支集中修改并重新发布契约。`scope:check` 对 `contract/*` 只会跳过范围校验，不能证明 Contract Change 已获批准；Gitee 上必须要求组长审批该 PR，并在 PR 中附上对应批准记录。
 
 ## 常见错误
 
-- 推送被拒绝或忘记 pull：先执行 `git status`、`git remote -v`、`git fetch origin`、`git log HEAD..origin/<本组分支>`；先保存或提交本地工作，再 `git pull origin <本组分支>`，不要 force push。
+- 推送被拒绝或忘记同步：先执行 `git status --short` 和 `git remote -v`；工作区为空时让 Agent 执行 `git pull --no-rebase origin main` 或 `git pull --ff-only origin <本组分支>`，不要 force push。
 - `scope:check` 失败：撤回越界文件，或发 Contract Change。
 - Build 失败：提交完整错误给 AI，不要删除类型、改成 `any` 或关闭规则。
 - 数据不一致：回到老师物模型和领域文档，不要在页面临时补假数据。
