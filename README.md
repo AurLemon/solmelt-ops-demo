@@ -11,7 +11,7 @@ SolMelt 是福建理工大学人工智能与交通工程学院实验班小组实
 
 `package.json` 固定 Node.js 24.x、pnpm 11.24.0 与核心依赖版本；`pnpm-lock.yaml` 是唯一锁文件。`pnpm-workspace.yaml` 仅用于 pnpm 构建许可，不包含多 package，也不采用 workspace 拆分业务。
 
-完整前置环境、Windows/macOS 安装、Docker 与原生 MySQL 兜底见 [环境指南](docs/environment-setup.md)。老师任务书的最低验收和答辩动作见 [任务书验收基线](docs/acceptance-baseline.md)。
+完整前置环境、`.env.example` 归属、Windows/macOS 安装、Docker 与原生 MySQL 兜底见 [环境指南](docs/environment-setup.md)。老师任务书的最低验收和答辩动作见 [任务书验收基线](docs/acceptance-baseline.md)。
 
 ## 第一次启动
 
@@ -56,7 +56,7 @@ Docker Compose 会自动拉取 `mysql:8.4`，无需手动拉镜像。只有 Dock
 
 ## Agent 入门
 
-成员可以使用自己的 Codex、Claude Code、DeepSeek Harness 或其他具备文件与终端能力的 Agent。不要把 API Key、代理地址或个人 Agent 配置写入仓库；所有 Agent 的统一启动、提示词和只读确认步骤见 [Agent 入门](docs/agent-quickstart.md)。
+成员可以使用自己的 Codex、Claude Code、DeepSeek Harness 或其他具备文件与终端能力的 Agent。不要把 API Key、代理地址或个人 Agent 配置写入仓库；所有 Agent 的职责声明、主线同步、新手环境配置提示词和只读确认步骤见 [Agent 入门](docs/agent-quickstart.md)。模块级验证和组员反馈见 [模块验证与反馈手册](docs/module-validation.md)。
 
 ## 提交前检查
 
