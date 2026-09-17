@@ -1,5 +1,3 @@
-import type { AlarmSummary } from './telemetry'
-
 export interface PumpTypeCount {
 	type: 'COLD_SALT' | 'TEMPERING' | 'HOT_SALT'
 	running: number
@@ -25,11 +23,10 @@ export interface DashboardRealtimeDevice {
 	running: boolean
 	delayed: boolean
 	latestReportedAt: string | null
-	metrics: Record<string, number | boolean | string>
+	metrics: Record<string, number | boolean>
 }
 
-export interface DashboardSnapshot {
-	overview: DashboardOverview
-	devices: DashboardRealtimeDevice[]
-	recentAlarms: AlarmSummary[]
+export interface RecentAlarmQuery {
+	/** 默认 10，取值范围 1 至 20。 */
+	limit?: number
 }

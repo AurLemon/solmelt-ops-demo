@@ -4,8 +4,18 @@ export interface ApiSuccess<T> {
 	requestId: string
 }
 
+export type ApiErrorCode =
+	| 'VALIDATION_ERROR'
+	| 'UNAUTHENTICATED'
+	| 'FORBIDDEN'
+	| 'NOT_FOUND'
+	| 'CONFLICT'
+	| 'REPORT_REJECTED'
+	| 'DATABASE_UNAVAILABLE'
+	| 'INTERNAL_ERROR'
+
 export interface ApiErrorBody {
-	code: string
+	code: ApiErrorCode
 	message: string
 	details?: unknown
 }
@@ -23,4 +33,9 @@ export interface PageResult<T> {
 	page: number
 	pageSize: number
 	total: number
+}
+
+export interface PaginationQuery {
+	page?: number
+	pageSize?: number
 }

@@ -1,0 +1,224 @@
+{
+  "deviceCode": "20WSC10AP040",
+  "deviceName": "4号冷盐泵",
+  "productKey": "Z60KbveZzXk8",
+  "productName": "立式熔盐泵",
+  "properties": [
+    {
+      "identifier": "inverter_start_status",
+      "name": "变频器启动状态",
+      "dataType": "BOOL",
+      "unit": "",
+      "category": "状态"
+    },
+    {
+      "identifier": "inverter_stop_status",
+      "name": "变频器停止状态",
+      "dataType": "BOOL",
+      "unit": "",
+      "category": "状态"
+    },
+    {
+      "identifier": "inverter_alarm_status",
+      "name": "变频器报警状态",
+      "dataType": "BOOL",
+      "unit": "",
+      "category": "状态"
+    },
+    {
+      "identifier": "inverter_fault_status",
+      "name": "变频器故障状态",
+      "dataType": "BOOL",
+      "unit": "",
+      "category": "状态"
+    },
+    {
+      "identifier": "inverter_ready_status",
+      "name": "变频器就绪状态",
+      "dataType": "BOOL",
+      "unit": "",
+      "category": "状态"
+    },
+    {
+      "identifier": "inverter_emergency_stop_status",
+      "name": "变频器急停状态",
+      "dataType": "BOOL",
+      "unit": "",
+      "category": "状态"
+    },
+    {
+      "identifier": "inverter_remote_control_status",
+      "name": "变频器远程控制状态",
+      "dataType": "BOOL",
+      "unit": "",
+      "category": "状态"
+    },
+    {
+      "identifier": "speed_command",
+      "name": "转速指令",
+      "dataType": "DOUBLE",
+      "unit": "rpm",
+      "category": "转速"
+    },
+    {
+      "identifier": "speed_feedback",
+      "name": "转速反馈",
+      "dataType": "DOUBLE",
+      "unit": "rpm",
+      "category": "转速"
+    },
+    {
+      "identifier": "forward_speed",
+      "name": "正转转速",
+      "dataType": "DOUBLE",
+      "unit": "rpm",
+      "category": "转速"
+    },
+    {
+      "identifier": "inverter_current",
+      "name": "变频器电流",
+      "dataType": "DOUBLE",
+      "unit": "A",
+      "category": "电气"
+    },
+    {
+      "identifier": "electric_meter_reading",
+      "name": "电表表盘数",
+      "dataType": "DOUBLE",
+      "unit": "kWh",
+      "category": "电气"
+    },
+    {
+      "identifier": "feeder_current",
+      "name": "馈线电流",
+      "dataType": "DOUBLE",
+      "unit": "A",
+      "category": "电气"
+    },
+    {
+      "identifier": "motor_temp_u1",
+      "name": "电机U相定子线圈温度1",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_temp_u2",
+      "name": "电机U相定子线圈温度2",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_temp_v1",
+      "name": "电机V相定子线圈温度1",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_temp_v2",
+      "name": "电机V相定子线圈温度2",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_temp_w1",
+      "name": "电机W相定子线圈温度1",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_temp_w2",
+      "name": "电机W相定子线圈温度2",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_drive_bearing_temp",
+      "name": "电机驱动端轴承温度",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_non_drive_bearing_temp",
+      "name": "电机非驱动端轴承温度",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "thrust_bearing_temp_x",
+      "name": "推力轴承温度X",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "thrust_bearing_temp_y",
+      "name": "推力轴承温度Y",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "pump_casing_temp1",
+      "name": "泵壳体温度1",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "pump_casing_temp2",
+      "name": "泵壳体温度2",
+      "dataType": "DOUBLE",
+      "unit": "℃",
+      "category": "温度"
+    },
+    {
+      "identifier": "motor_vibration_x",
+      "name": "电机振动X轴",
+      "dataType": "DOUBLE",
+      "unit": "mm/s",
+      "category": "振动"
+    },
+    {
+      "identifier": "motor_vibration_y",
+      "name": "电机振动Y轴",
+      "dataType": "DOUBLE",
+      "unit": "mm/s",
+      "category": "振动"
+    },
+    {
+      "identifier": "motor_vibration_z",
+      "name": "电机振动Z轴",
+      "dataType": "DOUBLE",
+      "unit": "mm/s",
+      "category": "振动"
+    },
+    {
+      "identifier": "pump_vibration_x",
+      "name": "泵振动X轴",
+      "dataType": "DOUBLE",
+      "unit": "mm/s",
+      "category": "振动"
+    },
+    {
+      "identifier": "pump_vibration_y",
+      "name": "泵振动Y轴",
+      "dataType": "DOUBLE",
+      "unit": "mm/s",
+      "category": "振动"
+    }
+  ],
+  "simplifiedReport": {
+    "motor_drive_bearing_temp": "驱动端轴承温度 ℃，正常范围 40~65，>65 触发报警",
+    "pump_vibration_x": "泵振动X轴 mm/s，正常范围 1.0~4.5，>4.5 触发报警",
+    "inverter_current": "变频器电流 A，正常范围 10~60，>60 触发报警",
+    "inverter_start_status": "运行状态 true=运行 / false=停机"
+  }
+}

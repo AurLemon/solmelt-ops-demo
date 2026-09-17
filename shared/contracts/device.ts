@@ -11,11 +11,26 @@ export interface ProductPropertyDefinition {
 	sort: number
 }
 
-export interface ProductDefinition {
+export interface ProductSummary {
 	id: string
 	identifier: string
 	name: string
+	remark: string | null
+}
+
+export interface ProductDefinition extends ProductSummary {
 	properties: ProductPropertyDefinition[]
+}
+
+export interface CreateProductInput {
+	identifier: string
+	name: string
+	remark?: string
+}
+
+export interface ProductImportResult {
+	productId: string
+	importedPropertyCount: number
 }
 
 export interface DeviceSummary {
@@ -28,8 +43,30 @@ export interface DeviceSummary {
 	online: boolean
 }
 
+export interface CreateDeviceInput {
+	productId: string
+	deviceCode: string
+	name: string
+	pumpType: PumpType
+	status: DeviceStatus
+}
+
+export interface UpdateDeviceInput {
+	name: string
+	pumpType: PumpType
+	status: DeviceStatus
+}
+
+export interface DeviceListQuery {
+	page?: number
+	pageSize?: number
+	keyword?: string
+	status?: DeviceStatus
+	productId?: string
+}
+
 export interface DeviceLatestValue {
 	propertyIdentifier: string
-	value: number | boolean | string
+	value: number | boolean
 	reportedAt: string
 }

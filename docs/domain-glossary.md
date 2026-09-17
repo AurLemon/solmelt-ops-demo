@@ -24,4 +24,6 @@
 | 泵振动 X 轴        | `pump_vibration_x`         | `> 4.5 mm/s` |
 | 变频器电流         | `inverter_current`         | `> 60 A`     |
 
+最低验收中上述三项任一超限均创建 `WARNING`、`UNHANDLED` 报警；`SERIOUS` 只保留给经组长批准的后续规则，不得自行引入分级或升级算法。
+
 所有接口传输 UTC ISO 8601 时间；页面按 Asia/Shanghai 显示。

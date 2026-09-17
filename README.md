@@ -11,7 +11,7 @@ SolMelt 是福建理工大学人工智能与交通工程学院实验班小组实
 
 `package.json` 固定 Node.js 24.x、pnpm 11.24.0 与核心依赖版本；`pnpm-lock.yaml` 是唯一锁文件。`pnpm-workspace.yaml` 仅用于 pnpm 构建许可，不包含多 package，也不采用 workspace 拆分业务。
 
-完整前置环境、Windows/macOS 安装、Docker 与原生 MySQL 兜底见 [环境指南](docs/environment-setup.md)。老师任务书的最低验收和答辩动作见 [任务书验收基线](docs/acceptance-baseline.md)。
+完整前置环境、`.env.example` 归属、Windows/macOS 安装、Docker 与原生 MySQL 兜底见 [环境指南](docs/environment-setup.md)。老师任务书的最低验收和答辩动作见 [任务书验收基线](docs/acceptance-baseline.md)。
 
 ## 第一次启动
 
@@ -56,16 +56,16 @@ Docker Compose 会自动拉取 `mysql:8.4`，无需手动拉镜像。只有 Dock
 
 ## Agent 入门
 
-成员可以使用自己的 Codex、Claude Code、DeepSeek Harness 或其他具备文件与终端能力的 Agent。不要把 API Key、代理地址或个人 Agent 配置写入仓库；所有 Agent 的统一启动、提示词和只读确认步骤见 [Agent 入门](docs/agent-quickstart.md)。
+成员可以使用自己的 Codex、Claude Code、DeepSeek Harness 或其他具备文件与终端能力的 Agent。不要把 API Key、代理地址或个人 Agent 配置写入仓库；所有 Agent 的职责声明、主线同步、新手环境配置提示词和只读确认步骤见 [Agent 入门](docs/agent-quickstart.md)。周四课堂必须按 [四组分步工作坊](docs/ai/thursday-workshop.md) 逐段复制 Prompt、人工验收并轮换 A/B 角色，不得只说“做完某模块”。模块级验证和组员反馈见 [模块验证与反馈手册](docs/module-validation.md)。
 
 ## 提交前检查
 
 ```bash
-pnpm format
+# 仅格式化本领域允许目录，例如：pnpm exec prettier --write layers/auth
 pnpm pr:check
 ```
 
-`pr:check` 会阻断越界文件，并依次执行格式、Lint、类型、Prisma 和生产 Build 检查。
+`pr:check` 会阻断越界文件，并依次执行格式、Lint、类型、Prisma 和生产 Build 检查；生产 Build 未通过时不得提交、推送或合并。
 
 ## 常用脚本
 
@@ -90,7 +90,7 @@ pnpm db:seed
 pnpm db:studio
 ```
 
-四个业务组不得自行生成 migration。需要改动 Schema 时按 `docs/cowork-guide.md` 提交 Contract Change，由组长统一生成并验证迁移。
+四个业务组不得自行生成 migration。需要改动 Schema 时由组长按 `docs/cowork-guide.md` 在 `main` 统一生成并验证迁移。
 
 ## 文档导航
 
@@ -101,5 +101,6 @@ pnpm db:studio
 - [数据库归属](docs/db-ownership.md)
 - [Cowork 指南](docs/cowork-guide.md)
 - [AI Review 指南](docs/ai-review.md)
+- [周四四组分步工作坊](docs/ai/thursday-workshop.md)
 - [环境指南](docs/environment-setup.md)
 - [任务书验收基线](docs/acceptance-baseline.md)

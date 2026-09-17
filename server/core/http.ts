@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import type { ApiFailure, ApiSuccess } from '~~/shared/contracts/api'
+import type { ApiErrorCode, ApiFailure, ApiSuccess } from '~~/shared/contracts/api'
 
 export function getRequestId(event: H3Event): string {
 	return getHeader(event, 'x-request-id') ?? crypto.randomUUID()
@@ -16,7 +16,7 @@ export function success<T>(event: H3Event, data: T): ApiSuccess<T> {
 export function failure(
 	event: H3Event,
 	statusCode: number,
-	code: string,
+	code: ApiErrorCode,
 	message: string,
 	details?: unknown,
 ): ApiFailure {

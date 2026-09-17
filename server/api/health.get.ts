@@ -12,8 +12,7 @@ export default defineEventHandler(async (event) => {
 			database: 'reachable' as const,
 			checkedAt,
 		})
-	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : 'Unknown database error'
-		return failure(event, 503, 'DATABASE_UNAVAILABLE', '数据库暂时不可用', { message, checkedAt })
+	} catch {
+		return failure(event, 503, 'DATABASE_UNAVAILABLE', '数据库暂时不可用', { checkedAt })
 	}
 })

@@ -17,7 +17,7 @@
 - API 使用 `/api/v1/telemetry/*`，输入遵循 `TelemetryReportInput`。
 - 只接受存在且已启用设备的数据；30 个属性必须来自物模型定义。
 - 驱动端轴承温度、泵振动 X、变频器电流阈值固定为 65、4.5、60。
-- 核心上报提交成功后发布 `telemetry.reported`；最新值和报警通过事件处理。
+- 报告、属性值、最新值和三项阈值报警必须在同一 Prisma transaction 内持久化；核心上报提交成功后发布 `telemetry.reported` 仅作后续审计/通知，Handler 不得回写这些核心数据。三项超限均创建 `WARNING`、`UNHANDLED` 报警。
 - 模拟器数据是任务要求的数据源，不是页面 Mock；不得在页面或接口里塞静态假数组，也不得擅自扩展 MQTT、消息队列或复杂五路振动判据。
 - 不得调用设备或大屏领域 Service。
 

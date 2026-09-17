@@ -98,8 +98,11 @@ async function seed(): Promise<void> {
 
 		const menus = [
 			['system:user:read', '用户管理', '/system/users', 10],
+			['system:user:write', '用户维护', '/system/users', 11],
 			['system:role:read', '角色管理', '/system/roles', 20],
+			['system:role:write', '角色维护', '/system/roles', 21],
 			['device:read', '设备管理', '/devices', 30],
+			['device:write', '设备维护', '/devices', 31],
 			['telemetry:read', '数据查询', '/telemetry', 40],
 			['alarm:read', '报警管理', '/alarms', 50],
 			['dashboard:read', '监测大屏', '/dashboard', 60],
@@ -116,13 +119,17 @@ async function seed(): Promise<void> {
 			)
 		}
 
+		await prisma.roleMenu.deleteMany({
+			where: { roleId: { in: [adminRole.id, operatorRole.id] } },
+		})
+
 		for (const menu of seededMenus) {
 			await prisma.roleMenu.upsert({
 				where: { roleId_menuId: { roleId: adminRole.id, menuId: menu.id } },
 				update: {},
 				create: { roleId: adminRole.id, menuId: menu.id },
 			})
-			if (!menu.permissionCode?.startsWith('system:')) {
+			if (!menu.permissionCode?.startsWith('system:') && menu.permissionCode?.endsWith(':read')) {
 				await prisma.roleMenu.upsert({
 					where: { roleId_menuId: { roleId: operatorRole.id, menuId: menu.id } },
 					update: {},

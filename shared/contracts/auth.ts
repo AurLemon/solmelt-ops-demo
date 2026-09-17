@@ -16,7 +16,6 @@ export type PermissionCode =
 	| 'device:write'
 	| 'telemetry:read'
 	| 'alarm:read'
-	| 'alarm:handle'
 	| 'dashboard:read'
 
 export interface AuthClaims {
@@ -51,4 +50,77 @@ export interface LoginResult {
 	token: string
 	expiresAt: string
 	user: AuthenticatedUser
+}
+
+export type UserStatus = 'ACTIVE' | 'DISABLED'
+
+export interface UserSummary {
+	id: string
+	username: string
+	displayName: string
+	role: RoleCode
+	status: UserStatus
+	createdAt: string
+}
+
+export interface CreateUserInput {
+	username: string
+	password: string
+	displayName: string
+	roleId: string
+	status: UserStatus
+}
+
+export interface UpdateUserInput {
+	displayName: string
+	roleId: string
+	status: UserStatus
+}
+
+export interface ResetPasswordInput {
+	password: string
+}
+
+export interface MenuItem {
+	id: string
+	parentId: string | null
+	name: string
+	path: string
+	permissionCode: PermissionCode | null
+	icon: string | null
+	sort: number
+	children: MenuItem[]
+}
+
+export interface RoleSummary {
+	id: string
+	code: RoleCode
+	name: string
+	remark: string | null
+	menuIds: string[]
+	createdAt: string
+}
+
+export interface CreateRoleInput {
+	code: RoleCode
+	name: string
+	remark?: string
+	menuIds: string[]
+}
+
+export interface UpdateRoleInput {
+	name: string
+	remark?: string
+	menuIds: string[]
+}
+
+export interface UserListQuery {
+	page?: number
+	pageSize?: number
+	keyword?: string
+}
+
+export interface RoleListQuery {
+	page?: number
+	pageSize?: number
 }
