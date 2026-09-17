@@ -7,6 +7,13 @@ export default defineNuxtConfig({
 		preference: 'dark',
 		fallback: 'dark',
 	},
+	fonts: {
+		providers: {
+			google: false,
+			googleicons: false,
+			fontsource: false,
+		},
+	},
 	devtools: { enabled: true },
 	typescript: {
 		strict: true,

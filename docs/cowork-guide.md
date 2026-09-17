@@ -95,8 +95,10 @@ git push origin <本组固定分支>
 2. 完整填写 PR 模板，明确 AI 工具、人工修改和验证结果。
 3. 同组另一位成员先 Review。
 4. 使用新 AI 会话按 `docs/ai-review.md` 做只读 Review。
-5. 组长本地执行 `pnpm pr:check`（其中生产 Build 必须通过）并按 auth → device → telemetry → dashboard 顺序集成；未通过不得合并。
-6. 使用 merge commit，保留成员提交记录。
+5. 组长先对照菜单路径、页面路由、权限码、Token 存储、API 字段、主题和数据源建立集成检查表；临时自签 Token、路由别名、Layer 全局配置和 Mock 数据不得进入最终主线。
+6. 组长本地执行 `pnpm pr:check`（其中生产 Build 必须通过）并按 auth → device → telemetry → dashboard 顺序集成；未通过不得合并。
+7. 使用 merge commit，保留成员提交记录。
+8. 合并后的 `main` 重新执行门禁，并从正式登录与侧栏开始复走完整数据闭环；至少检查暗色/浅色、桌面/移动端和显式错误反馈。各分支单独 Build 通过不能替代这一步。
 
 其他组完成合并后，组员不需要手动理解 fetch/merge；在自己的 feat 分支直接让 Agent 执行：
 
@@ -110,6 +112,8 @@ git pull --no-rebase origin main
 ## 公共改动
 
 业务组不得直接修改 `shared/`、Prisma Schema、migration、根配置、依赖和其他 Layer。确有需要时说明受影响的字段、接口、领域和兼容方案；组长确认后直接在 `main` 集中修改并同步文档。
+
+全局主题、字体 Provider、公共 Head、路由默认值和应用壳属于根配置或 `app/`。业务 Layer 不得通过自己的 `nuxt.config.ts` 长期承载全局兜底；如果课堂阶段确需临时兼容，PR 中必须标注清理条件，并在合并前由组长收口。
 
 ## 常见错误
 

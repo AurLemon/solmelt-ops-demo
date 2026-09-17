@@ -77,7 +77,7 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 ```text
 你正在 SolMelt 仓库根目录工作。只读，不要修改文件、安装依赖、启动服务、创建提交或推送。
 
-请阅读 README.md、docs/environment-setup.md、docs/acceptance-baseline.md、docs/architecture.md、docs/domain-glossary.md、docs/api-contract.md、docs/event-contract.md、docs/db-ownership.md、根 AGENTS.md，以及当前领域的 layers/<domain>/AGENTS.md 和 docs/ai/<domain>.md。
+请阅读 README.md、docs/environment-setup.md、docs/acceptance-baseline.md、docs/architecture.md、docs/domain-glossary.md、docs/api-contract.md、docs/event-contract.md、docs/db-ownership.md、根 AGENTS.md，以及当前领域的 layers/<domain>/AGENTS.md 和 docs/ai/<domain>.md；涉及页面、组件或样式时再阅读 docs/ui-guidelines.md。
 
 然后用简洁中文确认：当前 Git 分支、最低验收目标、允许修改目录、禁止修改目录、涉及的 API 和事件、提交前必须运行的命令。若信息不足或分支不对，停止并指出缺失项。
 ```
@@ -91,13 +91,13 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 ```text
 你负责 SolMelt 的 <domain> 业务领域，不是只负责某一个文件夹。当前分支必须是 feat/<domain>；可写范围是 <allowed-paths>，其他目录只能阅读，不能修改。
 
-先阅读 docs/agent-quickstart.md、README.md、docs/environment-setup.md、docs/acceptance-baseline.md、docs/architecture.md、docs/api-contract.md、根 AGENTS.md、layers/<domain>/AGENTS.md、docs/ai/<domain>.md，以及与任务直接相关的冻结契约。
+先阅读 docs/agent-quickstart.md、README.md、docs/environment-setup.md、docs/acceptance-baseline.md、docs/architecture.md、docs/api-contract.md、根 AGENTS.md、layers/<domain>/AGENTS.md、docs/ai/<domain>.md，以及与任务直接相关的冻结契约；涉及页面、组件或样式时再阅读 docs/ui-guidelines.md。
 
 先执行 git fetch origin，再检查 git status、git remote -v、当前分支，以及当前分支是否有未同步的 origin/main。先复述任务目标、最低验收、允许文件、接口/事件、人工验收动作；未经确认不要扩大范围。
 
 禁止修改 shared、Prisma Schema、migration、package.json、pnpm-lock.yaml、根配置和其他 Layer；需要公共改动时交由组长在 `main` 维护。禁止 Mock 数据、显式 any、@ts-ignore、静默吞错、调试日志、额外依赖和任务书外的框架或协议。
 
-完成后删除调试代码，只对 <allowed-paths> 执行 `pnpm exec prettier --write <allowed-paths>`，不得运行全仓 `pnpm format`。随后必须执行 pnpm pr:check；该命令包含生产 Build，未通过时不得声明完成、提交或推送。通过后先用本提示词逐项自查范围、契约、Mock 数据、鉴权与错误路径，再交给新的只读 AI 会话 Review。使用 Conventional Commits：<type>(<scope>): <中文摘要>；一个提交只包含一个可说明的变更。报告实际修改文件、pnpm pr:check 成功结果、数据流和未完成项。
+完成后删除调试代码，只对 <allowed-paths> 执行 `pnpm exec prettier --write <allowed-paths>`，不得运行全仓 `pnpm format`。随后必须执行 pnpm pr:check；该命令包含生产 Build，未通过时不得声明完成、提交或推送。通过后先用本提示词逐项自查范围、契约、Mock 数据、鉴权与错误路径；页面任务还要从侧栏完成一次客户端导航，并核验暗色/浅色和 loading/empty/error/ready。再交给新的只读 AI 会话 Review。使用 Conventional Commits：<type>(<scope>): <中文摘要>；一个提交只包含一个可说明的变更。报告实际修改文件、pnpm pr:check 成功结果、人工路径、数据流和未完成项，并把本机环境问题与仓库问题分开。
 ```
 
 其中 `<domain>` 和 `<allowed-paths>` 必须替换为本组实际值：`auth`/`layers/auth/**`、`device`/`layers/device/**`、`telemetry`/`layers/telemetry/**` 与 `scripts/simulator/**`、`dashboard`/`layers/dashboard/**`。四组都可以读取公共目录，但公共目录和其他 Layer 默认不可写。
@@ -137,6 +137,17 @@ Agent 的职责按业务领域划分，不按“一个 Agent 只能看一个文�
 具体的人工验证步骤、跨模块联调顺序和组员反馈模板见 [模块验证与反馈手册](module-validation.md)。每个模块完成后，必须提交“预期、实际、证据、阻塞项、需要哪个组协作”五项反馈，不能只回复“已完成”。
 
 第一次课堂开发不要直接使用完整领域任务。两人一组时先按 [周四课堂执行手册](ai/thursday-workshop.md) 现场认领 A/B checkpoint，一次只向 Agent 发送一段 Prompt；完成只读复述、人工确认、实现、真实验证后，才允许提交和换手。A/B 是可轮换的课堂角色，不代表固定前端或后端岗位。
+
+## 分支交付与集成交付
+
+业务分支通过 `pnpm pr:check` 只能标记为“分支可审查”，不能直接标记为“项目已闭环”。交付报告必须分开列出：
+
+1. 仓库代码结果：提交、文件、接口、页面与门禁证据。
+2. 本机状态：凭证、代理、Git ref、Dev Server 和本地排除规则；这些不能冒充仓库问题或仓库修复。
+3. 集成前置：依赖哪个公共契约或其他领域，当前是否已在 `main` 联调。
+4. 人工路径：从登录和侧栏开始的真实操作，而不是只列 API 或直接访问 URL。
+
+四个领域合并后，组长必须在同一份 `main`、同一个数据库和正式 Auth 会话下复走：登录与双角色 -> 侧栏导航 -> 产品/物模型/设备写操作 -> Python HTTP 上报 -> 历史/报警 -> 大屏轮询和主题切换。任何分支为了等待依赖而加入的临时 Token、路由别名、全局配置或假数据，都必须在合并前移除或由组长转化为正式公共实现。
 
 ## 每次修改后的动作
 

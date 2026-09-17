@@ -117,7 +117,7 @@ Navigator 已确认 Auth Checkpoint A 通过。删除调试日志，只对 layer
 
 完整阅读根 AGENTS.md、docs/ai/thursday-workshop.md 的 Auth 部分、docs/ai/auth.md、docs/api-contract.md、layers/auth/AGENTS.md，并审阅 A 的实际 diff。不要修改文件。
 
-请用初学者能复述的中文说明：登录页怎样获得验证码、怎样调用登录接口、JWT 为什么放在 localStorage、什么时候必须清除、路由守卫和服务端鉴权分别解决什么问题。列出准备修改的文件和浏览器验收动作，然后停止等待我确认。今天不要实现用户、角色和菜单管理。
+请用初学者能复述的中文说明：登录页怎样获得验证码、怎样调用登录接口、JWT 为什么放在 `solmelt_token` Cookie、业务 API 怎样组装 Bearer 头、什么时候必须清除、路由守卫和服务端鉴权分别解决什么问题。列出准备修改的文件和浏览器验收动作，然后停止等待我确认。今天不要实现用户、角色和菜单管理。
 ```
 
 #### Auth B 第 2 段 实现
@@ -125,9 +125,9 @@ Navigator 已确认 Auth Checkpoint A 通过。删除调试日志，只对 layer
 ```text
 只实施 Auth Checkpoint B：
 - 登录页包含用户名、密码、验证码输入、验证码图片刷新、提交中状态和可理解的错误提示。
-- 登录成功后只把 JWT 保存到 localStorage，并进入一个受保护首页；不要保存密码或验证码。
+- 登录成功后只把 JWT 保存到 `solmelt_token` Cookie，并进入一个受保护首页；不要保存密码或验证码。
 - 提供强类型的 Auth composable/API 封装，调用 /api/v1/auth/me 获取当前用户。
-- 未登录访问受保护页面跳转登录；收到 401、Token 过期或主动退出时清除 localStorage 并返回登录页。
+- 未登录访问受保护页面跳转登录；收到 401、Token 过期或主动退出时清除 Token Cookie 并返回登录页。
 - 页面不输出 Token，不把 role code 当作权限判断依据。
 
 只修改 layers/auth/**，不改根 app、shared、Prisma、依赖或其他 Layer。完成后报告页面状态、数据流和文件，不要格式化、提交或推送。
@@ -136,7 +136,7 @@ Navigator 已确认 Auth Checkpoint A 通过。删除调试日志，只对 layer
 #### Auth B 第 3 段 验证
 
 ```text
-使用真实 admin 和 operator 分别完成浏览器验证：刷新验证码、错误验证码提示、成功登录、刷新页面仍保持登录、/me 返回当前用户、退出后 localStorage Token 被清除、直接访问受保护页会跳转。再用损坏 Token 验证 401 后自动清理。
+使用真实 admin 和 operator 分别完成浏览器验证：刷新验证码、错误验证码提示、成功登录、刷新页面仍保持登录、/me 返回当前用户、退出后 Token Cookie 被清除、直接访问受保护页会跳转。再用损坏 Token 验证 401 后自动清理。
 
 请逐项记录预期和实际，截图不得包含 Token、密码、验证码答案或 JWT_SECRET。只修复本 checkpoint 的问题，通过后停止等待人工确认。
 ```

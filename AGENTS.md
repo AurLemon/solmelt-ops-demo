@@ -10,7 +10,7 @@
 
 ## 开工前必读
 
-1. 阅读 `README.md`、`docs/environment-setup.md`、`docs/acceptance-baseline.md`、`docs/architecture.md`、`docs/api-contract.md`。
+1. 阅读 `README.md`、`docs/environment-setup.md`、`docs/acceptance-baseline.md`、`docs/architecture.md`、`docs/api-contract.md`；涉及页面、组件或样式时还必须阅读 `docs/ui-guidelines.md`。
 2. 阅读当前 Layer 的 `AGENTS.md`、`README.md` 与 `docs/ai/<domain>.md`。
 3. `.env.example` 是组长维护并提交的通用模板；每位成员首次启动都必须从它创建本机 `.env`，只替换 `JWT_SECRET`，保持 Docker 的数据库变量与 `DATABASE_URL` 指向同一 MySQL。每台电脑使用自己的本地 Docker 数据库，禁止提交 `.env`、数据库密码或数据库数据；依次执行 `pnpm env:check`、`docker compose config --quiet`、`docker compose up -d --wait`、`docker compose ps`、`pnpm db:migrate:deploy`、`pnpm db:seed`、`pnpm db:migrate:status`。这是所有领域的通用前置，Telemetry 只是在此基础上额外需要 Python 模拟器。
 4. 检查 `git branch --show-current`、`git status --short`、`git remote -v`，并先执行只读的 `git fetch origin`。如果工作区为空且 `origin/main` 有未同步提交，Agent 才能在当前业务分支执行 `git pull --no-rebase origin main`；如果有本地改动、分支不对或出现冲突，必须停止并先向成员报告，不能丢弃改动或强行覆盖。
@@ -60,6 +60,15 @@
 - Telemetry 拥有 `DeviceLatestValue` 的写入权；Device 和 Dashboard 可按冻结口径只读该投影，但不得写入或导入 Telemetry 私有 Service。
 - API 使用冻结的 `ApiResult<T>` 和 `/api/v1/<domain>/*` 命名空间；所有时间传输 UTC ISO 8601，页面按北京时间展示。
 - 禁止显式 `any`、`@ts-ignore`、无说明的规则关闭、调试日志、页面静态业务数组和虚构业务数据。
+- 全局主题、字体、公共 Head、路由默认值和应用壳配置只能进入根 `nuxt.config.ts` 或 `app/`；Layer 的 `nuxt.config.ts` 不得承载为整个项目兜底的临时配置。
+
+## UI 与交互基线
+
+- 页面实现遵循 `docs/ui-guidelines.md`。优先使用 Nuxt UI 组件和本地 Lucide 图标，保持紧凑、克制、适合重复操作的工业管理界面；不得自行引入第二套组件库。
+- 默认暗色，但浅色必须完整可用。新增界面必须人工检查两种主题，不得依赖只对暗色生效的硬编码背景、文字或 ECharts 配色。
+- 页面路由、菜单路径、权限码和页面布局是一个契约。验收必须从登录后的侧栏进行客户端跳转，并覆盖刷新、前进/后退和直接访问；不能只证明某个 URL 刷新后能打开。
+- 异步页面必须显式提供 loading、empty、error 和 ready 状态；登录、保存、删除、导入失败必须展示服务端可公开的错误信息。
+- UI 变更至少检查一个桌面视口和一个移动视口；动效只用于状态反馈与层级转换，并尊重 `prefers-reduced-motion`。
 
 ## 最低验收优先，禁止过度实现
 
@@ -83,3 +92,12 @@
 - 业务分支自身的协作更新仍使用 `git pull --ff-only origin <branch>`；不要用 `git pull` 代替主线同步，也不要用 force push 解决冲突。
 - 修改 `shared/`、Prisma、迁移、根配置、依赖、Docker、公共布局或 tooling 前，必须由组长确认影响范围，并在 `main` 同步更新契约文档；不得用越界修改逃避作用域检查。
 - 完成后删除调试代码。业务分支只能对本领域允许目录执行 `pnpm exec prettier --write <allowed-paths>`，不得运行会改写全仓库的 `pnpm format`；随后必须执行 `pnpm pr:check`。其成功结果包含生产 Build；未通过时不得声明完成、提交或推送。通过后提交完整 diff 给新的只读 AI 会话 Review；成员本人必须能够口述数据流和关键实现。
+
+## 分支完成不等于集成完成
+
+- `pnpm pr:check` 证明代码能格式化、通过类型与 Schema 校验并完成生产构建，不证明菜单可达、客户端导航、主题切换、错误反馈或跨领域数据链正确。
+- 业务分支交付报告必须把“仓库代码问题”“本机环境/凭证/Git 问题”“等待其他分支的集成前置”分开，不能把本机故障写成产品缺陷，也不能把临时自签 Token、临时路由或 Layer 全局覆盖描述成最终方案。
+- 分支依赖公共契约时，应消费 `shared/`、`server/core/` 和文档中的冻结边界；不得因为依赖分支尚未合并而复制 Auth、路由、主题或数据源逻辑。无法联调时明确标记待集成验收。
+- PR Review 除完整 diff 外，必须对照菜单路径、页面路由、权限码、Token 存储、API 字段、主题和数据源做契约表。发现不一致时先修契约，不以兼容别名或页面级临时配置长期兜底。
+- 四个领域合入 `main` 后，由组长执行一次集成验收：正式登录 -> 侧栏逐项客户端导航 -> 管理写操作 -> 模拟器上报 -> 历史与报警 -> 大屏轮询；同时切换浅色并检查错误状态。任一环节失败都不能仅凭各分支 Build 成功宣布闭环。
+- 合并前后都要确认提交已存在于目标远端分支。凭证失败、loose ref 损坏或 `.git/info/exclude` 仅是成员本机状态，须单独报告和修复，不得通过 force push、手写 ref 或提交临时目录绕过。
