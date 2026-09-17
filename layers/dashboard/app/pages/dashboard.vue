@@ -7,7 +7,12 @@ import {
 	type DashboardRequestErrorCode,
 } from '../composables/useDashboardApi'
 
-definePageMeta({ layout: false })
+defineOptions({ name: 'MonitoringDashboardPage' })
+
+definePageMeta({
+	layout: false,
+	permission: 'dashboard:read',
+})
 
 useHead({ title: 'SolMelt 监测大屏' })
 
