@@ -4,14 +4,14 @@ import type { AlarmSummary } from '~~/shared/contracts/telemetry'
 const props = defineProps<{ alarms: AlarmSummary[]; loading?: boolean }>()
 
 const LEVEL_CLASSES: Record<AlarmSummary['level'], string> = {
-	WARNING: 'border-amber-500/40 bg-amber-500/15 text-amber-300',
-	SERIOUS: 'border-rose-500/40 bg-rose-500/15 text-rose-300',
+	WARNING: 'border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-300',
+	SERIOUS: 'border-rose-500/40 bg-rose-500/15 text-rose-700 dark:text-rose-300',
 }
 
 const STATUS_CLASSES: Record<AlarmSummary['status'], string> = {
-	UNHANDLED: 'border-orange-500/40 bg-orange-500/15 text-orange-300',
-	ACKNOWLEDGED: 'border-sky-500/40 bg-sky-500/15 text-sky-300',
-	RECOVERED: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300',
+	UNHANDLED: 'border-orange-500/40 bg-orange-500/15 text-orange-700 dark:text-orange-300',
+	ACKNOWLEDGED: 'border-sky-500/40 bg-sky-500/15 text-sky-700 dark:text-sky-300',
+	RECOVERED: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
 	IGNORED: 'border-slate-500/40 bg-slate-500/15 text-slate-400',
 }
 

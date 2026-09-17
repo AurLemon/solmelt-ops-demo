@@ -15,12 +15,12 @@ const props = withDefaults(
 
 /** 完整类名必须字面量出现，Tailwind 才能静态收集。 */
 const TONE_TEXT: Record<StatTone, string> = {
-	cyan: 'text-cyan-300',
-	emerald: 'text-emerald-300',
-	slate: 'text-slate-400',
-	amber: 'text-amber-300',
-	orange: 'text-orange-300',
-	rose: 'text-rose-300',
+	cyan: 'text-cyan-600 dark:text-cyan-300',
+	emerald: 'text-emerald-600 dark:text-emerald-300',
+	slate: 'text-slate-600 dark:text-slate-400',
+	amber: 'text-amber-500 dark:text-amber-300',
+	orange: 'text-orange-500 dark:text-orange-300',
+	rose: 'text-rose-500 dark:text-rose-300',
 }
 
 const TONE_BORDER: Record<StatTone, string> = {

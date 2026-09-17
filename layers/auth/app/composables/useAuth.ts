@@ -7,6 +7,7 @@ const TOKEN_MAX_AGE_SECONDS = 8 * 60 * 60
 interface ApiCallOptions {
 	method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
 	body?: unknown
+	skipAuthRedirect?: boolean
 }
 
 /**
@@ -45,7 +46,7 @@ export function useAuth() {
 			}
 			if (fetchError.statusCode === 401) {
 				await clearSession()
-				await navigateTo('/login')
+				if (!options.skipAuthRedirect) await navigateTo('/login')
 			}
 			// 优先展示后端 ApiFailure 里的具体原因（如“显示名不能为空”），而非 HTTP 层的 “400 Bad Request”。
 			const backendMessage = fetchError.data?.error?.message ?? fetchError.data?.message
@@ -56,7 +57,7 @@ export function useAuth() {
 
 		if (response.error.code === 'UNAUTHENTICATED') {
 			await clearSession()
-			await navigateTo('/login')
+			if (!options.skipAuthRedirect) await navigateTo('/login')
 		}
 		throw new Error(response.error.message)
 	}
@@ -70,6 +71,7 @@ export function useAuth() {
 		const result = await apiFetch<LoginResult>('/api/v1/auth/login', {
 			method: 'POST',
 			body: input,
+			skipAuthRedirect: true,
 		})
 		token.value = result.token
 		user.value = result.user

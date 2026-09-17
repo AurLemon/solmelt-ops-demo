@@ -17,6 +17,7 @@ const loading = ref(false)
 
 const editorOpen = ref(false)
 const editingId = ref<number | null>(null)
+const removalTarget = ref<RoleSummary | null>(null)
 const form = ref({
 	code: '',
 	name: '',
@@ -108,11 +109,16 @@ async function submitEditor(): Promise<void> {
 	}
 }
 
-async function removeRole(target: RoleSummary): Promise<void> {
-	if (!window.confirm(`确认删除角色「${target.name}」？角色删除为物理删除且不可恢复。`)) return
+function requestRoleRemoval(target: RoleSummary): void {
+	removalTarget.value = target
+}
+
+async function confirmRoleRemoval(): Promise<void> {
+	if (!removalTarget.value) return
 	errorMessage.value = ''
 	try {
-		await apiFetch(`/api/v1/auth/roles/${target.id}`, { method: 'DELETE' })
+		await apiFetch(`/api/v1/auth/roles/${removalTarget.value.id}`, { method: 'DELETE' })
+		removalTarget.value = null
 		await loadRoles()
 	} catch (error) {
 		errorMessage.value = error instanceof Error ? error.message : '删除失败'
@@ -136,7 +142,9 @@ onMounted(() => {
 	<section class="space-y-4">
 		<div class="flex flex-wrap items-center justify-between gap-3">
 			<div>
-				<h1 class="text-xl font-semibold">角色管理</h1>
+				<h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+					角色管理
+				</h1>
 				<p class="text-sm text-slate-400">
 					共 {{ total }} 个角色；角色为物理删除，仍被用户关联时会被拒绝。鉴权以权限码为准。
 				</p>
@@ -152,56 +160,74 @@ onMounted(() => {
 			:description="errorMessage"
 		/>
 
-		<div
-			v-if="editorOpen && canWrite"
-			class="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
+		<UModal
+			v-if="canWrite"
+			v-model:open="editorOpen"
+			:title="editingId === null ? '新建角色' : `编辑角色：${form.code}`"
+			description="角色权限变更会在下一次请求时生效。"
+			:ui="{ content: 'max-w-3xl' }"
 		>
-			<h2 class="mb-3 font-medium">
-				{{ editingId === null ? '新建角色' : `编辑角色：${form.code}` }}
-			</h2>
-			<form class="space-y-3" @submit.prevent="submitEditor">
-				<div class="grid gap-3 md:grid-cols-3">
-					<label class="space-y-1 text-sm">
-						<span class="text-slate-300">角色编码</span>
-						<UInput
-							v-model="form.code"
-							class="w-full"
-							:disabled="editingId !== null"
-							placeholder="如 VIEWER"
-						/>
-					</label>
-					<label class="space-y-1 text-sm">
-						<span class="text-slate-300">角色名称</span>
-						<UInput v-model="form.name" class="w-full" />
-					</label>
-					<label class="space-y-1 text-sm">
-						<span class="text-slate-300">备注</span>
-						<UInput v-model="form.remark" class="w-full" />
-					</label>
-				</div>
-
-				<fieldset class="rounded-md border border-slate-800 p-3">
-					<legend class="px-1 text-sm text-slate-300">菜单与操作权限</legend>
-					<div class="grid gap-2 md:grid-cols-3">
-						<UCheckbox
-							v-for="option in menuOptions"
-							:key="option.id"
-							:label="option.label"
-							:model-value="form.menuIds.includes(option.id)"
-							@update:model-value="toggleMenu(option.id, Boolean($event))"
-						/>
+			<template #body>
+				<form id="role-editor" class="space-y-3" @submit.prevent="submitEditor">
+					<div class="grid gap-3 md:grid-cols-3">
+						<label class="space-y-1 text-sm">
+							<span class="text-slate-300">角色编码</span>
+							<UInput
+								v-model="form.code"
+								class="w-full"
+								:disabled="editingId !== null"
+								placeholder="如 VIEWER"
+							/>
+						</label>
+						<label class="space-y-1 text-sm">
+							<span class="text-slate-300">角色名称</span>
+							<UInput v-model="form.name" class="w-full" />
+						</label>
+						<label class="space-y-1 text-sm">
+							<span class="text-slate-300">备注</span>
+							<UInput v-model="form.remark" class="w-full" />
+						</label>
 					</div>
-					<p v-if="menuOptions.length === 0" class="text-sm text-slate-500">
-						当前角色没有可分配的菜单项（需要管理员权限的菜单数据）。
-					</p>
-				</fieldset>
 
-				<div class="flex gap-2">
-					<UButton type="submit" color="warning">保存</UButton>
-					<UButton color="neutral" variant="soft" @click="editorOpen = false">取消</UButton>
-				</div>
-			</form>
-		</div>
+					<fieldset class="rounded-md border border-slate-800 p-3">
+						<legend class="px-1 text-sm text-slate-300">菜单与操作权限</legend>
+						<div class="grid gap-2 md:grid-cols-3">
+							<UCheckbox
+								v-for="option in menuOptions"
+								:key="option.id"
+								:label="option.label"
+								:model-value="form.menuIds.includes(option.id)"
+								@update:model-value="toggleMenu(option.id, Boolean($event))"
+							/>
+						</div>
+						<p v-if="menuOptions.length === 0" class="text-sm text-slate-500">
+							当前角色没有可分配的菜单项（需要管理员权限的菜单数据）。
+						</p>
+					</fieldset>
+				</form>
+			</template>
+			<template #footer>
+				<UButton type="submit" form="role-editor" color="warning">保存</UButton>
+				<UButton color="neutral" variant="soft" @click="editorOpen = false">取消</UButton>
+			</template>
+		</UModal>
+
+		<UModal
+			:open="Boolean(removalTarget)"
+			title="删除角色"
+			:description="removalTarget ? `确认删除角色「${removalTarget.name}」？此操作不可恢复。` : ''"
+			:ui="{ content: 'max-w-lg' }"
+			@update:open="
+				(open) => {
+					if (!open) removalTarget = null
+				}
+			"
+		>
+			<template #footer>
+				<UButton color="error" @click="confirmRoleRemoval">确认删除</UButton>
+				<UButton color="neutral" variant="soft" @click="removalTarget = null">取消</UButton>
+			</template>
+		</UModal>
 
 		<div class="overflow-x-auto rounded-lg border border-slate-800">
 			<table class="w-full text-sm">
@@ -226,7 +252,7 @@ onMounted(() => {
 						</td>
 						<td v-if="canWrite" class="space-x-2 px-4 py-3">
 							<UButton size="xs" variant="soft" @click="openEdit(item)">编辑</UButton>
-							<UButton size="xs" color="error" variant="soft" @click="removeRole(item)"
+							<UButton size="xs" color="error" variant="soft" @click="requestRoleRemoval(item)"
 								>删除</UButton
 							>
 						</td>

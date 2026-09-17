@@ -8,6 +8,8 @@ import type { AlarmSummary, TelemetryPoint } from '~~/shared/contracts/telemetry
 
 const TOKEN_COOKIE_NAME = 'solmelt_token'
 
+export const ALL_ALARM_FILTER = '__ALL__' as const
+
 export interface DeviceOption {
 	deviceId: string
 	deviceCode: string
@@ -30,13 +32,13 @@ export interface TelemetryCatalog {
 
 /** 仅展示用的冻结枚举标签，不承载任何设备或遥测业务数据。 */
 export const ALARM_LEVEL_OPTIONS = [
-	{ label: '全部', value: '' },
+	{ label: '全部', value: ALL_ALARM_FILTER },
 	{ label: '预警 (WARNING)', value: 'WARNING' },
 	{ label: '严重 (SERIOUS)', value: 'SERIOUS' },
 ] as const
 
 export const ALARM_STATUS_OPTIONS = [
-	{ label: '全部', value: '' },
+	{ label: '全部', value: ALL_ALARM_FILTER },
 	{ label: '未处理', value: 'UNHANDLED' },
 	{ label: '已确认', value: 'ACKNOWLEDGED' },
 	{ label: '已恢复', value: 'RECOVERED' },

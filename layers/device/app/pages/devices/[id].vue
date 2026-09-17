@@ -19,7 +19,7 @@ import type { DeviceSummary } from '~~/shared/contracts/device'
 defineOptions({ name: 'DeviceDetailPage' })
 
 definePageMeta({
-	layout: false,
+	layout: 'dashboard',
 	permission: 'device:read',
 })
 
@@ -92,7 +92,7 @@ function retry() {
 
 <template>
 	<section class="space-y-6">
-		<UButton to="/device" size="xs" color="neutral" variant="link" icon="i-lucide-arrow-left">
+		<UButton to="/devices" size="xs" color="neutral" variant="link" icon="i-lucide-arrow-left">
 			返回设备列表
 		</UButton>
 
@@ -120,7 +120,9 @@ function retry() {
 			<UCard class="border-slate-800 bg-slate-900/70">
 				<div class="space-y-4">
 					<div class="flex flex-wrap items-center gap-3">
-						<h1 class="text-2xl font-semibold tracking-tight">{{ detailData!.device.name }}</h1>
+						<h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+							{{ detailData!.device.name }}
+						</h1>
 						<UBadge
 							:color="detailData!.device.status === 'ENABLED' ? 'success' : 'neutral'"
 							variant="subtle"

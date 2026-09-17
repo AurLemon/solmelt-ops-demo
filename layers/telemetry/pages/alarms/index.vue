@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AlarmSummary } from '~~/shared/contracts/telemetry'
 import {
+	ALL_ALARM_FILTER,
 	ALARM_LEVEL_OPTIONS,
 	ALARM_STATUS_OPTIONS,
 	formatBeijingTime,
@@ -14,8 +15,8 @@ useHead({ title: '报警管理 — SolMelt' })
 
 const { fetchAlarms, loadCatalog } = useTelemetryData()
 const devices = ref<DeviceOption[]>([])
-const filterDeviceId = ref('')
-const filterLevel = ref('')
+const filterDeviceId = ref<string>(ALL_ALARM_FILTER)
+const filterLevel = ref<string>(ALL_ALARM_FILTER)
 const filterStatus = ref('UNHANDLED')
 const page = ref(1)
 const pageSize = ref(10)
@@ -24,6 +25,17 @@ const alarms = ref<AlarmSummary[]>([])
 const loading = ref(false)
 const error = ref('')
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+const deviceOptions = computed(() => [
+	{ label: '全部设备', value: ALL_ALARM_FILTER },
+	...devices.value.map((device) => ({
+		label: `${device.name}（${device.deviceCode}）`,
+		value: device.deviceId,
+	})),
+])
+
+function optionalFilter(value: string): string | undefined {
+	return value === ALL_ALARM_FILTER ? undefined : value
+}
 
 async function loadAlarms(): Promise<void> {
 	loading.value = true
@@ -32,9 +44,9 @@ async function loadAlarms(): Promise<void> {
 		const result = await fetchAlarms({
 			page: page.value,
 			pageSize: pageSize.value,
-			deviceId: filterDeviceId.value || undefined,
-			level: filterLevel.value || undefined,
-			status: filterStatus.value || undefined,
+			deviceId: optionalFilter(filterDeviceId.value),
+			level: optionalFilter(filterLevel.value),
+			status: optionalFilter(filterStatus.value),
 		})
 		alarms.value = result.items
 		total.value = result.total
@@ -102,54 +114,47 @@ onMounted(async () => {
 <template>
 	<div class="space-y-6">
 		<div class="flex items-center justify-between">
-			<h1 class="text-2xl font-bold text-amber-300">报警管理</h1>
-			<NuxtLink to="/telemetry/history" class="text-sm text-slate-400 hover:text-amber-300">
-				历史曲线 →
-			</NuxtLink>
+			<h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+				报警管理
+			</h1>
+			<UButton
+				to="/telemetry/history"
+				color="neutral"
+				variant="link"
+				trailing-icon="i-lucide-arrow-right"
+			>
+				历史曲线
+			</UButton>
 		</div>
 
 		<UCard class="border-slate-800 bg-slate-900/70">
 			<div class="flex flex-wrap items-end gap-4">
 				<div>
 					<label class="mb-1 block text-xs text-slate-400">设备</label>
-					<select
+					<USelect
 						v-model="filterDeviceId"
-						class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
-						@change="handleFilter"
-					>
-						<option value="">全部设备</option>
-						<option v-for="device in devices" :key="device.deviceId" :value="device.deviceId">
-							{{ device.name }} ({{ device.deviceCode }})
-						</option>
-					</select>
+						class="min-w-52"
+						:items="deviceOptions"
+						@update:model-value="handleFilter"
+					/>
 				</div>
 				<div>
 					<label class="mb-1 block text-xs text-slate-400">级别</label>
-					<select
+					<USelect
 						v-model="filterLevel"
-						class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
-						@change="handleFilter"
-					>
-						<option v-for="option in ALARM_LEVEL_OPTIONS" :key="option.value" :value="option.value">
-							{{ option.label }}
-						</option>
-					</select>
+						class="min-w-28"
+						:items="ALARM_LEVEL_OPTIONS"
+						@update:model-value="handleFilter"
+					/>
 				</div>
 				<div>
 					<label class="mb-1 block text-xs text-slate-400">状态</label>
-					<select
+					<USelect
 						v-model="filterStatus"
-						class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
-						@change="handleFilter"
-					>
-						<option
-							v-for="option in ALARM_STATUS_OPTIONS"
-							:key="option.value"
-							:value="option.value"
-						>
-							{{ option.label }}
-						</option>
-					</select>
+						class="min-w-28"
+						:items="ALARM_STATUS_OPTIONS"
+						@update:model-value="handleFilter"
+					/>
 				</div>
 				<UButton color="warning" variant="outline" @click="handleFilter">刷新</UButton>
 			</div>

@@ -185,22 +185,24 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div class="flex h-screen w-full flex-col overflow-hidden bg-slate-950 text-slate-100">
+	<div
+		class="monitoring-dashboard dashboard-shell flex h-screen w-full flex-col overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100"
+	>
 		<header
-			class="flex shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/60 px-6 py-3"
+			class="dashboard-header flex shrink-0 items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:px-6"
 		>
 			<div class="flex items-baseline gap-3">
-				<span class="text-xl font-semibold text-amber-300">SolMelt</span>
+				<span class="text-xl font-semibold text-amber-500 dark:text-amber-300">SolMelt</span>
 				<span class="text-sm text-slate-300">光热熔盐泵智能运营监测大屏</span>
 			</div>
 
-			<div class="flex items-center gap-6">
+			<div class="flex items-center gap-3 md:gap-6">
 				<div class="flex items-center gap-2">
 					<span class="text-xs text-slate-500">数据截至</span>
 					<span class="font-mono text-sm tabular-nums text-slate-200">{{ dataUntilLabel }}</span>
 					<span
 						v-if="dataUntilState === 'delayed'"
-						class="rounded border border-orange-500/40 bg-orange-500/15 px-2 py-0.5 text-xs text-orange-300"
+						class="rounded border border-orange-500/40 bg-orange-500/15 px-2 py-0.5 text-xs text-orange-700 dark:text-orange-300"
 					>
 						数据延迟 {{ dataDelaySeconds }} 秒
 					</span>
@@ -212,7 +214,7 @@ onBeforeUnmount(() => {
 					</span>
 					<span
 						v-else
-						class="rounded border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300"
+						class="rounded border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-300"
 					>
 						数据正常
 					</span>
@@ -225,29 +227,36 @@ onBeforeUnmount(() => {
 					<span v-if="skippedRounds > 0" class="font-mono tabular-nums text-amber-400">
 						跳过 {{ skippedRounds }}
 					</span>
-					<span v-if="inFlight" class="text-cyan-300">刷新中…</span>
+					<span v-if="inFlight" class="text-cyan-700 dark:text-cyan-300">刷新中…</span>
 				</div>
+				<ThemeToggleButton />
 			</div>
 		</header>
 
-		<div
-			v-if="errorMessage"
-			class="flex shrink-0 items-center gap-3 border-b border-rose-500/40 bg-rose-500/10 px-6 py-2 text-sm"
-		>
-			<span class="font-medium text-rose-200">{{ errorTitle }}</span>
-			<span class="text-rose-300/80">{{ errorMessage }}</span>
-			<span v-if="credentialHint" class="text-rose-300/60">{{ credentialHint }}</span>
-			<span v-if="lastSuccessfulAt" class="ml-auto text-xs text-rose-300/70">
-				当前展示 {{ formatShanghaiTime(lastSuccessfulAt.toISOString()) }} 的最后真实数据
-			</span>
-		</div>
+		<Transition name="dashboard-notice">
+			<div
+				v-if="errorMessage"
+				class="flex shrink-0 items-center gap-3 border-b border-rose-500/40 bg-rose-500/10 px-6 py-2 text-sm"
+			>
+				<span class="font-medium text-rose-800 dark:text-rose-200">{{ errorTitle }}</span>
+				<span class="text-rose-700 dark:text-rose-300/80">{{ errorMessage }}</span>
+				<span v-if="credentialHint" class="text-rose-600 dark:text-rose-300/60">{{
+					credentialHint
+				}}</span>
+				<span v-if="lastSuccessfulAt" class="ml-auto text-xs text-rose-600 dark:text-rose-300/70">
+					当前展示 {{ formatShanghaiTime(lastSuccessfulAt.toISOString()) }} 的最后真实数据
+				</span>
+			</div>
+		</Transition>
 
 		<main class="flex min-h-0 flex-1 flex-col gap-3 p-4">
-			<section class="grid shrink-0 grid-cols-6 gap-3">
+			<section class="dashboard-stage dashboard-stage-stats grid shrink-0 grid-cols-6 gap-3">
 				<DashboardStatCard v-for="card in statCards" :key="card.label" v-bind="card" />
 			</section>
 
-			<section class="grid min-h-0 flex-1 auto-rows-fr grid-cols-12 gap-3">
+			<section
+				class="dashboard-stage dashboard-stage-main grid min-h-0 flex-1 auto-rows-fr grid-cols-12 gap-3"
+			>
 				<DashboardDeviceGrid class="col-span-8" :devices="devices" :loading="loading" />
 
 				<div class="col-span-4 grid min-h-0 auto-rows-fr gap-3">
@@ -260,9 +269,95 @@ onBeforeUnmount(() => {
 				</div>
 			</section>
 
-			<section class="h-[236px] shrink-0">
+			<section class="dashboard-stage dashboard-stage-alarms h-[236px] shrink-0">
 				<DashboardAlarmList class="h-full" :alarms="alarms" :loading="loading" />
 			</section>
 		</main>
 	</div>
 </template>
+
+<style scoped>
+.dashboard-shell {
+	animation: dashboard-reveal 420ms ease-out both;
+}
+
+.dashboard-header {
+	animation: dashboard-header-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dashboard-stage {
+	opacity: 0;
+	animation: dashboard-stage-in 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dashboard-stage-stats {
+	animation-delay: 90ms;
+}
+
+.dashboard-stage-main {
+	animation-delay: 170ms;
+}
+
+.dashboard-stage-alarms {
+	animation-delay: 250ms;
+}
+
+.dashboard-notice-enter-active,
+.dashboard-notice-leave-active {
+	transition:
+		opacity 240ms ease,
+		transform 240ms ease;
+}
+
+.dashboard-notice-enter-from,
+.dashboard-notice-leave-to {
+	opacity: 0;
+	transform: translateY(-100%);
+}
+
+@keyframes dashboard-reveal {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes dashboard-header-in {
+	from {
+		opacity: 0;
+		transform: translateY(-12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes dashboard-stage-in {
+	from {
+		opacity: 0;
+		transform: translateY(14px) scale(0.992);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dashboard-shell,
+	.dashboard-header,
+	.dashboard-stage {
+		animation: none;
+		opacity: 1;
+		transform: none;
+	}
+
+	.dashboard-notice-enter-active,
+	.dashboard-notice-leave-active {
+		transition: none;
+	}
+}
+</style>

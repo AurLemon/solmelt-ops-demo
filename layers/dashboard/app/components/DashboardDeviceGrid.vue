@@ -16,11 +16,14 @@ function resolveStatus(device: DashboardRealtimeDevice): { label: string; classN
 	if (device.online && device.running) {
 		return {
 			label: '运行中',
-			className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+			className: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40',
 		}
 	}
 	if (device.online) {
-		return { label: '在线', className: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40' }
+		return {
+			label: '在线',
+			className: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/40',
+		}
 	}
 	return { label: '离线', className: 'bg-slate-500/15 text-slate-400 border-slate-500/40' }
 }
@@ -73,7 +76,7 @@ const deviceViews = computed<DeviceView[]>(() =>
 						</span>
 						<span
 							v-if="view.device.delayed"
-							class="rounded border border-orange-500/40 bg-orange-500/15 px-2 py-0.5 text-xs text-orange-300"
+							class="rounded border border-orange-500/40 bg-orange-500/15 px-2 py-0.5 text-xs text-orange-700 dark:text-orange-300"
 						>
 							数据延迟
 						</span>

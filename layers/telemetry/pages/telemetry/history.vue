@@ -29,6 +29,22 @@ const error = ref('')
 const hasQueried = ref(false)
 
 const propertyGroups = computed(() => groupProperties(properties.value))
+const propertyOptions = computed(() =>
+	propertyGroups.value.map((group) => [
+		{ label: group.category, type: 'label' as const },
+		...group.items.map((item) => ({
+			label: `${item.name}${item.unit ? ` (${item.unit})` : ''}`,
+			value: item.identifier,
+		})),
+	]),
+)
+const deviceSelectionOptions = computed(() =>
+	devices.value.map((device) => ({
+		label: device.name,
+		description: device.deviceCode,
+		value: device.deviceId,
+	})),
+)
 const selectedProperty = computed(() =>
 	properties.value.find((property) => property.identifier === propertyIdentifier.value),
 )
@@ -99,10 +115,12 @@ onMounted(async () => {
 <template>
 	<div class="space-y-6">
 		<div class="flex items-center justify-between">
-			<h1 class="text-2xl font-bold text-amber-300">历史曲线查询</h1>
-			<NuxtLink to="/alarms" class="text-sm text-slate-400 hover:text-amber-300">
-				报警管理 →
-			</NuxtLink>
+			<h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+				历史曲线查询
+			</h1>
+			<UButton to="/alarms" color="neutral" variant="link" trailing-icon="i-lucide-arrow-right">
+				报警管理
+			</UButton>
 		</div>
 
 		<UCard class="border-slate-800 bg-slate-900/70">
@@ -116,79 +134,60 @@ onMounted(async () => {
 				<div>
 					<div class="mb-2 flex items-center gap-3">
 						<span class="text-sm font-medium text-slate-300">设备选择</span>
-						<button
-							class="text-xs text-amber-300 hover:underline"
+						<UButton
+							size="xs"
+							color="warning"
+							variant="link"
 							:disabled="catalogLoading"
 							@click="toggleAllDevices"
 						>
 							{{ allDeviceSelected ? '取消全选' : '全选' }}
-						</button>
+						</UButton>
 					</div>
-					<div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-						<label
-							v-for="device in devices"
-							:key="device.deviceId"
-							class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm transition hover:border-amber-500/50"
-							:class="{
-								'border-amber-500/70 bg-amber-500/10': selectedDeviceIds.includes(device.deviceId),
-							}"
-						>
-							<input
-								v-model="selectedDeviceIds"
-								type="checkbox"
-								:value="device.deviceId"
-								class="size-4 accent-amber-400"
-							/>
-							<div class="min-w-0">
-								<p class="truncate text-slate-200">{{ device.name }}</p>
-								<p class="truncate text-xs text-slate-500">{{ device.deviceCode }}</p>
-							</div>
-						</label>
-					</div>
+					<UCheckboxGroup
+						v-model="selectedDeviceIds"
+						color="warning"
+						variant="card"
+						:disabled="catalogLoading"
+						:items="deviceSelectionOptions"
+						:ui="{
+							fieldset: 'grid grid-cols-2 gap-2 sm:grid-cols-3',
+							item: 'min-w-0',
+							label: 'truncate',
+							description: 'truncate font-mono',
+						}"
+					/>
 				</div>
 
 				<div>
 					<span class="mb-2 block text-sm font-medium text-slate-300">属性选择</span>
-					<select
+					<USelect
 						v-model="propertyIdentifier"
 						:disabled="catalogLoading"
-						class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500 disabled:opacity-50"
-					>
-						<optgroup v-for="group in propertyGroups" :key="group.category" :label="group.category">
-							<option v-for="item in group.items" :key="item.identifier" :value="item.identifier">
-								{{ item.name }}{{ item.unit ? ` (${item.unit})` : '' }}
-							</option>
-						</optgroup>
-					</select>
+						:items="propertyOptions"
+						class="w-full"
+					/>
 				</div>
 
 				<div>
 					<div class="mb-2 flex items-center gap-3">
 						<span class="text-sm font-medium text-slate-300">时间范围（北京时间）</span>
 						<div class="flex gap-2">
-							<button class="text-xs text-amber-300 hover:underline" @click="setRange(30)">
+							<UButton size="xs" color="warning" variant="link" @click="setRange(30)">
 								近30分钟
-							</button>
-							<button class="text-xs text-amber-300 hover:underline" @click="setRange(60)">
+							</UButton>
+							<UButton size="xs" color="warning" variant="link" @click="setRange(60)">
 								近1小时
-							</button>
-							<button class="text-xs text-amber-300 hover:underline" @click="setRange(180)">
+							</UButton>
+							<UButton size="xs" color="warning" variant="link" @click="setRange(180)">
 								近3小时
-							</button>
+							</UButton>
 						</div>
 					</div>
 					<div class="flex flex-wrap items-center gap-3">
-						<input
-							v-model="startLocal"
-							type="datetime-local"
-							class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
-						/>
+						<UInput v-model="startLocal" type="datetime-local" class="w-56" />
 						<span class="text-slate-500">至</span>
-						<input
-							v-model="endLocal"
-							type="datetime-local"
-							class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
-						/>
+						<UInput v-model="endLocal" type="datetime-local" class="w-56" />
 					</div>
 				</div>
 

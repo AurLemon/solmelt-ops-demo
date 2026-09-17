@@ -6,15 +6,21 @@ const props = defineProps<{
 	onlineCount: number
 	offlineCount: number
 }>()
+const colorMode = useColorMode()
+const chartPalette = computed(() =>
+	colorMode.value === 'dark'
+		? { surface: '#0f172a', border: '#1e293b', text: '#e2e8f0' }
+		: { surface: '#ffffff', border: '#cbd5e1', text: '#0f172a' },
+)
 
 /** 在线 / 离线严格取自接口返回的冻结口径，不在此处重新推导判定规则。 */
 const option = computed<EChartsOption>(() => ({
 	backgroundColor: 'transparent',
 	tooltip: {
 		trigger: 'item',
-		backgroundColor: '#0f172a',
-		borderColor: '#1e293b',
-		textStyle: { color: '#e2e8f0' },
+		backgroundColor: chartPalette.value.surface,
+		borderColor: chartPalette.value.border,
+		textStyle: { color: chartPalette.value.text },
 	},
 	series: [
 		{

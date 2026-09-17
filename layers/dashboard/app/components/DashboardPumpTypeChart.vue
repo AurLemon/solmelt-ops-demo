@@ -3,6 +3,12 @@ import type { EChartsOption } from 'echarts'
 import type { PumpTypeCount } from '~~/shared/contracts/dashboard'
 
 const props = defineProps<{ pumpTypes: PumpTypeCount[] }>()
+const colorMode = useColorMode()
+const chartPalette = computed(() =>
+	colorMode.value === 'dark'
+		? { surface: '#0f172a', border: '#1e293b', muted: '#94a3b8', text: '#cbd5e1' }
+		: { surface: '#ffffff', border: '#cbd5e1', muted: '#64748b', text: '#334155' },
+)
 
 const option = computed<EChartsOption>(() => ({
 	backgroundColor: 'transparent',
@@ -10,21 +16,21 @@ const option = computed<EChartsOption>(() => ({
 	tooltip: {
 		trigger: 'axis',
 		axisPointer: { type: 'shadow' },
-		backgroundColor: '#0f172a',
-		borderColor: '#1e293b',
-		textStyle: { color: '#e2e8f0' },
+		backgroundColor: chartPalette.value.surface,
+		borderColor: chartPalette.value.border,
+		textStyle: { color: chartPalette.value.text },
 	},
 	xAxis: {
 		type: 'value',
 		minInterval: 1,
-		axisLabel: { color: '#94a3b8', fontSize: 11 },
-		splitLine: { lineStyle: { color: '#1e293b' } },
+		axisLabel: { color: chartPalette.value.muted, fontSize: 11 },
+		splitLine: { lineStyle: { color: chartPalette.value.border } },
 	},
 	yAxis: {
 		type: 'category',
 		data: props.pumpTypes.map((item) => pumpTypeLabel(item.type)),
-		axisLabel: { color: '#cbd5e1', fontSize: 12 },
-		axisLine: { lineStyle: { color: '#1e293b' } },
+		axisLabel: { color: chartPalette.value.text, fontSize: 12 },
+		axisLine: { lineStyle: { color: chartPalette.value.border } },
 		axisTick: { show: false },
 	},
 	series: [

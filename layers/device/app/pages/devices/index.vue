@@ -12,7 +12,7 @@ import type { DeviceSummary } from '~~/shared/contracts/device'
 defineOptions({ name: 'DeviceListPage' })
 
 definePageMeta({
-	layout: false,
+	layout: 'dashboard',
 	permission: 'device:read',
 })
 
@@ -69,7 +69,9 @@ function retry() {
 <template>
 	<section class="space-y-6">
 		<header class="space-y-1">
-			<h1 class="text-2xl font-semibold tracking-tight">熔盐泵设备</h1>
+			<h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+				熔盐泵设备
+			</h1>
 			<p class="text-sm text-slate-400">
 				共
 				<span class="font-mono text-slate-200">{{ result?.total ?? 0 }}</span>
@@ -159,7 +161,7 @@ function retry() {
 								{{ device.lastReportedAt ? formatDateTime(device.lastReportedAt) : '—' }}
 							</td>
 							<td class="px-4 py-3 text-right">
-								<UButton size="xs" color="primary" variant="link" :to="`/device/${device.id}`">
+								<UButton size="xs" color="primary" variant="link" :to="`/devices/${device.id}`">
 									查看详情
 								</UButton>
 							</td>
