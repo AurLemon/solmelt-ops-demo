@@ -1,9 +1,8 @@
 """SolMelt 熔盐泵数据采集模拟器。
 
-按任务书要求，默认每 60 秒向 /api/v1/telemetry/report 发送 8 台设备的
+按任务书要求，默认每 20 秒向 /api/v1/telemetry/report 发送 9 台设备的
 随机游走数据，偶发注入明确标注的异常值，用于驱动 65°C / 4.5 mm/s / 60 A
-三项报警闭环。上报完成后随机将部分 UNHANDLED 报警置为 ACKNOWLEDGED /
-RECOVERED / IGNORED，模拟真实运维场景。
+三项报警闭环。模拟器只负责产生采集输入，绝不修改报警处置状态。
 
 使用方式：
     python3 scripts/simulator/simulate.py
@@ -17,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import json
 import random
 import signal
 import sys
@@ -27,7 +25,7 @@ from typing import Any
 
 import requests
 
-# 8 台真实设备编号（来自 prisma seed，产品 key 固定为 Z60KbveZzXk8）
+# 9 台真实设备编号（来自 prisma seed，产品 key 固定为 Z60KbveZzXk8）
 DEVICE_CODES: list[str] = [
     "20WSC10AP010",
     "20WSC10AP020",
@@ -37,6 +35,7 @@ DEVICE_CODES: list[str] = [
     "20WSC10AP060",
     "20WSH20AP010",
     "20WSH20AP020",
+    "20WSH20AP030",
 ]
 
 # 30 个物模型属性及其基线值与游走步长。
@@ -179,88 +178,6 @@ def send_report(
     return False, f"HTTP {resp.status_code} {err}"
 
 
-def fetch_unhandled_alarms(
-    base_url: str,
-    timeout: float,
-    session: requests.Session,
-) -> list[dict[str, Any]]:
-    """拉取所有 UNHANDLED 报警，用于后续随机处理状态。"""
-    all_items: list[dict[str, Any]] = []
-    page = 1
-    while True:
-        url = f"{base_url.rstrip('/')}/api/v1/telemetry/alarms"
-        params = {"status": "UNHANDLED", "page": page, "pageSize": 100}
-        try:
-            resp = session.get(url, params=params, timeout=timeout)
-        except requests.RequestException:
-            break
-        if resp.status_code != 200:
-            break
-        body = resp.json()
-        if not body.get("success"):
-            break
-        data = body.get("data", {})
-        items = data.get("items", [])
-        all_items.extend(items)
-        if len(all_items) >= data.get("total", 0):
-            break
-        page += 1
-        if page > 10:  # 安全兜底，避免死循环
-            break
-    return all_items
-
-
-def patch_alarm_status(
-    base_url: str,
-    alarm_id: str,
-    new_status: str,
-    timeout: float,
-    session: requests.Session,
-) -> bool:
-    """修改单条报警状态。"""
-    url = f"{base_url.rstrip('/')}/api/v1/telemetry/alarms/{alarm_id}/status"
-    try:
-        resp = session.put(url, json={"status": new_status}, timeout=timeout)
-        return resp.status_code == 200 and resp.json().get("success", False)
-    except requests.RequestException:
-        return False
-
-
-# 可随机选择的目标状态（不含 UNHANDLED）
-_HANDLED_STATUSES = ["ACKNOWLEDGED", "RECOVERED", "IGNORED"]
-
-
-def process_random_alarms(
-    base_url: str,
-    timeout: float,
-    session: requests.Session,
-    max_count: int = 3,
-) -> tuple[int, str]:
-    """
-    拉取 UNHANDLED 报警，随机处理其中 0~max_count 条，返回处理数量与详情。
-    """
-    unhandled = fetch_unhandled_alarms(base_url, timeout, session)
-    if not unhandled:
-        return 0, "无待处理报警"
-
-    # 每轮随机处理 0 ~ max_count 条
-    k = min(random.randint(0, max_count), len(unhandled))
-    if k == 0:
-        return 0, f"UNHANDLED={len(unhandled)}，本轮跳过"
-
-    targets = random.sample(unhandled, k)
-    ok_count = 0
-    statuses_used: list[str] = []
-    for alarm in targets:
-        new_status = random.choice(_HANDLED_STATUSES)
-        if patch_alarm_status(base_url, alarm["id"], new_status, timeout, session):
-            ok_count += 1
-            statuses_used.append(new_status)
-
-    detail = f"处理 {ok_count}/{k} 条 → {', '.join(statuses_used)}"
-    return ok_count, detail
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="SolMelt 熔盐泵数据采集模拟器")
     parser.add_argument(
@@ -271,8 +188,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--interval",
         type=float,
-        default=60.0,
-        help="固定发送间隔（秒），默认 60 秒",
+        default=20.0,
+        help="固定发送间隔（秒），默认 20 秒",
     )
     parser.add_argument(
         "--abnormal-rate",
@@ -287,20 +204,9 @@ def parse_args() -> argparse.Namespace:
         help="单次 HTTP 请求超时，默认 5 秒",
     )
     parser.add_argument(
-        "--max-process",
-        type=int,
-        default=3,
-        help="每轮最多处理几条报警状态，默认 3",
-    )
-    parser.add_argument(
         "--once",
         action="store_true",
         help="只发一轮就退出，用于冒烟测试",
-    )
-    parser.add_argument(
-        "--skip-status",
-        action="store_true",
-        help="跳过报警状态处理（只上报数据）",
     )
     return parser.parse_args()
 
@@ -331,8 +237,7 @@ def main() -> int:
         f"[Simulator] 启动：base_url={args.url} "
         f"devices={len(devices)} "
         f"interval={args.interval}s "
-        f"abnormal_rate={args.abnormal_rate} "
-        f"skip_status={args.skip_status}",
+        f"abnormal_rate={args.abnormal_rate}",
         flush=True,
     )
 
@@ -352,17 +257,6 @@ def main() -> int:
             print(
                 f"[{ts}] round={round_index} {tag} {status_line} "
                 f"device={device.device_code} {detail}",
-                flush=True,
-            )
-
-        # 上报完成后，随机处理部分 UNHANDLED 报警
-        if not args.skip_status and running:
-            ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
-            n, detail = process_random_alarms(
-                args.url, args.timeout, session, max_count=args.max_process
-            )
-            print(
-                f"[{ts}] round={round_index} STATUS 处理={n} {detail}",
                 flush=True,
             )
 

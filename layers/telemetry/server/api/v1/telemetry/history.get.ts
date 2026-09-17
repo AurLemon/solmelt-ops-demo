@@ -1,9 +1,13 @@
 import { ZodError } from 'zod'
 import { success, failure } from '~~/server/core/http'
+import { authorizeRequest } from '~~/server/core/auth'
 import { queryHistory } from '../../../services/telemetry.service'
 import type { TelemetryPoint } from '~~/shared/contracts/telemetry'
 
 export default defineEventHandler(async (event) => {
+	const authorization = await authorizeRequest(event, 'telemetry:read')
+	if (!authorization.authorized) return authorization.response
+
 	const query = getQuery(event)
 	try {
 		const points: TelemetryPoint[] = await queryHistory(query)

@@ -4,7 +4,6 @@ import { usePrisma } from '~~/server/core/prisma'
 import { eventBus } from '~~/server/core/event-bus'
 import { DOMAIN_THRESHOLDS } from '~~/shared/domain/thresholds'
 import type {
-	AlarmStatus,
 	AlarmSummary,
 	TelemetryPoint,
 	TelemetryReportInput,
@@ -92,11 +91,8 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 		acceptedProps[key] = value
 	}
 
-	if (Object.keys(acceptedProps).length === 0) {
-		throw new TelemetryError(
-			'VALIDATION_ERROR',
-			`没有合法属性，拒绝原因: ${rejectedProps.join(', ')}`,
-		)
+	if (rejectedProps.length > 0) {
+		throw new TelemetryError('VALIDATION_ERROR', `属性校验失败: ${rejectedProps.join(', ')}`)
 	}
 
 	const reportedAt = new Date(input.reportedAt)
@@ -106,7 +102,7 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 			data: {
 				deviceId: device.id,
 				reportedAt,
-				rawJson: input.props as unknown as Prisma.InputJsonValue,
+				rawJson: acceptedProps as Prisma.InputJsonValue,
 			},
 		})
 
@@ -135,6 +131,13 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 				},
 			})
 		}
+
+		// Device 的在线、数据截至与 Dashboard 延迟口径均以成功上报时间为准。
+		// 必须与报告、最新值和报警在同一 transaction 中提交，避免投影不一致。
+		await tx.device.update({
+			where: { id: device.id },
+			data: { lastReportedAt: reportedAt },
+		})
 
 		const alarms: Array<{ id: number; metric: string }> = []
 		for (const { identifier, threshold } of THRESHOLD_CHECKS) {
@@ -183,18 +186,23 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 	}
 }
 
-export const historyQuerySchema = z.object({
-	deviceIds: z
-		.string()
-		.min(1)
-		.transform((s) => s.split(',').map((p) => p.trim()))
-		.refine((arr) => arr.every((p) => /^\d+$/.test(p)), {
-			message: 'deviceIds 必须为逗号分隔的数字 ID',
-		}),
-	propertyIdentifier: z.string().min(1),
-	start: z.string().datetime({ offset: true }),
-	end: z.string().datetime({ offset: true }),
-})
+export const historyQuerySchema = z
+	.object({
+		deviceIds: z
+			.string()
+			.min(1)
+			.transform((s) => s.split(',').map((p) => p.trim()))
+			.refine((arr) => arr.every((p) => /^\d+$/.test(p)), {
+				message: 'deviceIds 必须为逗号分隔的数字 ID',
+			}),
+		propertyIdentifier: z.string().min(1),
+		start: z.string().datetime({ offset: true }),
+		end: z.string().datetime({ offset: true }),
+	})
+	.refine((value) => new Date(value.start) < new Date(value.end), {
+		path: ['end'],
+		message: '结束时间必须晚于开始时间',
+	})
 
 export async function queryHistory(raw: unknown): Promise<TelemetryPoint[]> {
 	const input = historyQuerySchema.parse(raw)
@@ -289,30 +297,4 @@ export async function queryAlarms(raw: unknown): Promise<PageResult<AlarmSummary
 		pageSize: input.pageSize,
 		total,
 	}
-}
-
-export const alarmStatusSchema = z.object({
-	status: z.enum(['ACKNOWLEDGED', 'RECOVERED', 'IGNORED']),
-})
-
-export async function updateAlarmStatus(
-	alarmId: string,
-	raw: unknown,
-): Promise<{ alarmId: string; previousStatus: AlarmStatus; status: AlarmStatus }> {
-	const input = alarmStatusSchema.parse(raw)
-	const prisma = usePrisma()
-	const id = Number(alarmId)
-	if (Number.isNaN(id)) throw new TelemetryError('NOT_FOUND', `报警 ${alarmId} 不存在`)
-
-	const alarm = await prisma.alarm.findUnique({ where: { id } })
-	if (!alarm) throw new TelemetryError('NOT_FOUND', `报警 ${alarmId} 不存在`)
-
-	const previousStatus = alarm.status
-	const now = new Date()
-	await prisma.alarm.update({
-		where: { id },
-		data: { status: input.status, handledAt: now },
-	})
-
-	return { alarmId: String(id), previousStatus, status: input.status }
 }

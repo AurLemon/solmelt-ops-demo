@@ -1,33 +1,42 @@
 <script setup lang="ts">
 import type { TelemetryPoint } from '~~/shared/contracts/telemetry'
 import {
-	DEVICE_OPTIONS,
-	PROPERTY_GROUPS,
-	findProperty,
-	fetchHistory,
-	toLocalInput,
 	fromLocalInput,
-	nowIso,
+	groupProperties,
 	isoMinusMinutes,
+	nowIso,
+	toLocalInput,
+	type DeviceOption,
+	type PropertyOption,
+	useTelemetryData,
 } from '../../composables/useTelemetryData'
+
+definePageMeta({ layout: 'dashboard', permission: 'telemetry:read' })
 
 useHead({ title: '历史曲线查询 — SolMelt' })
 
-// 查询表单状态
-const selectedDeviceIds = ref<string[]>([DEVICE_OPTIONS[0]!.deviceId])
-const propertyIdentifier = ref('inverter_current')
+const { fetchHistory, loadCatalog } = useTelemetryData()
+const devices = ref<DeviceOption[]>([])
+const properties = ref<PropertyOption[]>([])
+const catalogLoading = ref(true)
+const selectedDeviceIds = ref<string[]>([])
+const propertyIdentifier = ref('')
 const startLocal = ref(toLocalInput(isoMinusMinutes(60)))
 const endLocal = ref(toLocalInput(nowIso()))
-
-// 结果状态
 const points = ref<TelemetryPoint[]>([])
 const loading = ref(false)
 const error = ref('')
 const hasQueried = ref(false)
 
-const selectedProperty = computed(() => findProperty(propertyIdentifier.value))
+const propertyGroups = computed(() => groupProperties(properties.value))
+const selectedProperty = computed(() =>
+	properties.value.find((property) => property.identifier === propertyIdentifier.value),
+)
+const allDeviceSelected = computed(
+	() => devices.value.length > 0 && selectedDeviceIds.value.length === devices.value.length,
+)
 
-async function handleQuery() {
+async function handleQuery(): Promise<void> {
 	error.value = ''
 	if (selectedDeviceIds.value.length === 0) {
 		error.value = '请至少选择一台设备'
@@ -39,11 +48,7 @@ async function handleQuery() {
 	}
 	const start = fromLocalInput(startLocal.value)
 	const end = fromLocalInput(endLocal.value)
-	if (!start || !end) {
-		error.value = '请填写完整的时间范围'
-		return
-	}
-	if (new Date(start) >= new Date(end)) {
+	if (!start || !end || new Date(start) >= new Date(end)) {
 		error.value = '开始时间必须早于结束时间'
 		return
 	}
@@ -57,25 +62,38 @@ async function handleQuery() {
 			start,
 			end,
 		})
-	} catch (err: unknown) {
+	} catch (queryError: unknown) {
 		points.value = []
-		error.value = err instanceof Error ? err.message : '查询失败'
+		error.value = queryError instanceof Error ? queryError.message : '查询失败'
 	} finally {
 		loading.value = false
 	}
 }
 
-// 全选 / 反选设备
-const allDeviceSelected = computed(() => selectedDeviceIds.value.length === DEVICE_OPTIONS.length)
-function toggleAllDevices() {
-	selectedDeviceIds.value = allDeviceSelected.value ? [] : DEVICE_OPTIONS.map((d) => d.deviceId)
+function toggleAllDevices(): void {
+	selectedDeviceIds.value = allDeviceSelected.value
+		? []
+		: devices.value.map((device) => device.deviceId)
 }
 
-// 快捷时间范围
-function setRange(minutes: number) {
+function setRange(minutes: number): void {
 	startLocal.value = toLocalInput(isoMinusMinutes(minutes))
 	endLocal.value = toLocalInput(nowIso())
 }
+
+onMounted(async () => {
+	try {
+		const catalog = await loadCatalog()
+		devices.value = catalog.devices
+		properties.value = catalog.properties
+		selectedDeviceIds.value = catalog.devices.length > 0 ? [catalog.devices[0]!.deviceId] : []
+		propertyIdentifier.value = catalog.properties[0]?.identifier ?? ''
+	} catch (catalogError: unknown) {
+		error.value = catalogError instanceof Error ? catalogError.message : '加载设备与物模型失败'
+	} finally {
+		catalogLoading.value = false
+	}
+})
 </script>
 
 <template>
@@ -93,17 +111,22 @@ function setRange(minutes: number) {
 			</template>
 
 			<div class="space-y-5">
-				<!-- 设备选择 -->
+				<p v-if="catalogLoading" class="text-sm text-slate-400">正在加载真实设备与物模型…</p>
+
 				<div>
 					<div class="mb-2 flex items-center gap-3">
 						<span class="text-sm font-medium text-slate-300">设备选择</span>
-						<button class="text-xs text-amber-300 hover:underline" @click="toggleAllDevices">
+						<button
+							class="text-xs text-amber-300 hover:underline"
+							:disabled="catalogLoading"
+							@click="toggleAllDevices"
+						>
 							{{ allDeviceSelected ? '取消全选' : '全选' }}
 						</button>
 					</div>
 					<div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
 						<label
-							v-for="device in DEVICE_OPTIONS"
+							v-for="device in devices"
 							:key="device.deviceId"
 							class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm transition hover:border-amber-500/50"
 							:class="{
@@ -124,18 +147,14 @@ function setRange(minutes: number) {
 					</div>
 				</div>
 
-				<!-- 属性选择 -->
 				<div>
 					<span class="mb-2 block text-sm font-medium text-slate-300">属性选择</span>
 					<select
 						v-model="propertyIdentifier"
-						class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500"
+						:disabled="catalogLoading"
+						class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500 disabled:opacity-50"
 					>
-						<optgroup
-							v-for="group in PROPERTY_GROUPS"
-							:key="group.category"
-							:label="group.category"
-						>
+						<optgroup v-for="group in propertyGroups" :key="group.category" :label="group.category">
 							<option v-for="item in group.items" :key="item.identifier" :value="item.identifier">
 								{{ item.name }}{{ item.unit ? ` (${item.unit})` : '' }}
 							</option>
@@ -143,7 +162,6 @@ function setRange(minutes: number) {
 					</select>
 				</div>
 
-				<!-- 时间范围 -->
 				<div>
 					<div class="mb-2 flex items-center gap-3">
 						<span class="text-sm font-medium text-slate-300">时间范围（北京时间）</span>
@@ -151,11 +169,9 @@ function setRange(minutes: number) {
 							<button class="text-xs text-amber-300 hover:underline" @click="setRange(30)">
 								近30分钟
 							</button>
-							<span class="text-slate-600">|</span>
 							<button class="text-xs text-amber-300 hover:underline" @click="setRange(60)">
 								近1小时
 							</button>
-							<span class="text-slate-600">|</span>
 							<button class="text-xs text-amber-300 hover:underline" @click="setRange(180)">
 								近3小时
 							</button>
@@ -165,25 +181,23 @@ function setRange(minutes: number) {
 						<input
 							v-model="startLocal"
 							type="datetime-local"
-							class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500"
+							class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
 						/>
 						<span class="text-slate-500">至</span>
 						<input
 							v-model="endLocal"
 							type="datetime-local"
-							class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-500"
+							class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
 						/>
 					</div>
 				</div>
 
-				<!-- 错误提示 -->
 				<p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
-
-				<!-- 查询按钮 -->
 				<UButton
 					color="warning"
 					size="lg"
-					:loading="loading"
+					:loading="loading || catalogLoading"
+					:disabled="catalogLoading || devices.length === 0 || properties.length === 0"
 					class="w-full justify-center"
 					@click="handleQuery"
 				>
@@ -192,20 +206,18 @@ function setRange(minutes: number) {
 			</div>
 		</UCard>
 
-		<!-- 图表区域 -->
 		<UCard v-if="hasQueried" class="border-slate-800 bg-slate-900/70">
 			<template #header>
 				<div class="flex items-center justify-between">
 					<span class="text-base font-medium text-slate-200">
 						{{ selectedProperty?.name ?? propertyIdentifier }}
-						<span v-if="selectedProperty?.unit" class="text-slate-500">
-							({{ selectedProperty.unit }})
-						</span>
+						<span v-if="selectedProperty?.unit" class="text-slate-500"
+							>({{ selectedProperty.unit }})</span
+						>
 					</span>
-					<span class="text-xs text-slate-500"> {{ points.length }} 个数据点 </span>
+					<span class="text-xs text-slate-500">{{ points.length }} 个数据点</span>
 				</div>
 			</template>
-
 			<div v-if="loading" class="flex h-[360px] items-center justify-center text-slate-500">
 				加载中...
 			</div>
