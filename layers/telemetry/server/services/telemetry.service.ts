@@ -13,7 +13,7 @@ import type {
 } from '~~/shared/contracts/telemetry'
 import type { PageResult } from '~~/shared/contracts/api'
 
-const telemetryValueSchema = z.union([z.number(), z.boolean(), z.string()])
+const telemetryValueSchema = z.union([z.number(), z.boolean()])
 
 export const reportInputSchema = z.object({
 	deviceCode: z.string().min(1),
@@ -38,11 +38,18 @@ const THRESHOLD_CHECKS: Array<{
 
 export class TelemetryError extends Error {
 	constructor(
-		public readonly code: string,
+		public readonly code: 'VALIDATION_ERROR' | 'REPORT_REJECTED' | 'NOT_FOUND',
 		message: string,
 	) {
 		super(message)
 		this.name = 'TelemetryError'
+	}
+}
+
+function mapValueFields(value: TelemetryValue) {
+	return {
+		valueNumber: typeof value === 'number' ? value : null,
+		valueBoolean: typeof value === 'boolean' ? value : null,
 	}
 }
 
@@ -55,11 +62,8 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 		select: { id: true, deviceCode: true, productId: true, status: true, deletedAt: true },
 	})
 
-	if (!device || device.deletedAt) {
-		throw new TelemetryError('DEVICE_NOT_FOUND', `设备 ${input.deviceCode} 不存在`)
-	}
-	if (device.status !== 'ENABLED') {
-		throw new TelemetryError('DEVICE_DISABLED', `设备 ${input.deviceCode} 已停用`)
+	if (!device || device.deletedAt || device.status !== 'ENABLED') {
+		throw new TelemetryError('REPORT_REJECTED', `设备 ${input.deviceCode} 不存在、已删除或未启用`)
 	}
 
 	const properties = await prisma.productProperty.findMany({
@@ -90,14 +94,14 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 
 	if (Object.keys(acceptedProps).length === 0) {
 		throw new TelemetryError(
-			'NO_VALID_PROPERTIES',
+			'VALIDATION_ERROR',
 			`没有合法属性，拒绝原因: ${rejectedProps.join(', ')}`,
 		)
 	}
 
 	const reportedAt = new Date(input.reportedAt)
 
-	const report = await prisma.$transaction(async (tx) => {
+	const { report, createdAlarms } = await prisma.$transaction(async (tx) => {
 		const created = await tx.telemetryReport.create({
 			data: {
 				deviceId: device.id,
@@ -110,13 +114,48 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 			data: Object.entries(acceptedProps).map(([identifier, value]) => ({
 				reportId: created.id,
 				propertyIdentifier: identifier,
-				valueNumber: typeof value === 'number' ? value : null,
-				valueBoolean: typeof value === 'boolean' ? value : null,
-				valueText: typeof value === 'string' ? value : null,
+				...mapValueFields(value),
 			})),
 		})
 
-		return created
+		for (const [identifier, value] of Object.entries(acceptedProps)) {
+			await tx.deviceLatestValue.upsert({
+				where: {
+					deviceId_propertyIdentifier: {
+						deviceId: device.id,
+						propertyIdentifier: identifier,
+					},
+				},
+				update: { ...mapValueFields(value), reportedAt },
+				create: {
+					deviceId: device.id,
+					propertyIdentifier: identifier,
+					...mapValueFields(value),
+					reportedAt,
+				},
+			})
+		}
+
+		const alarms: Array<{ id: number; metric: string }> = []
+		for (const { identifier, threshold } of THRESHOLD_CHECKS) {
+			const v = acceptedProps[identifier]
+			if (typeof v !== 'number' || v <= threshold) continue
+
+			const alarm = await tx.alarm.create({
+				data: {
+					deviceId: device.id,
+					metric: identifier,
+					threshold,
+					actualValue: v,
+					level: 'WARNING',
+					status: 'UNHANDLED',
+					occurredAt: reportedAt,
+				},
+			})
+			alarms.push({ id: alarm.id, metric: identifier })
+		}
+
+		return { report: created, createdAlarms: alarms }
 	})
 
 	await eventBus.emit('telemetry.reported', {
@@ -127,20 +166,31 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 		props: acceptedProps,
 	})
 
-	const alarmTriggered = THRESHOLD_CHECKS.some(({ identifier, threshold }) => {
-		const value = acceptedProps[identifier]
-		return typeof value === 'number' && value > threshold
-	})
+	for (const alarm of createdAlarms) {
+		await eventBus.emit('alarm.created', {
+			alarmId: String(alarm.id),
+			deviceId: String(device.id),
+			metric: alarm.metric,
+			level: 'WARNING',
+			occurredAt: input.reportedAt,
+		})
+	}
 
 	return {
 		reportId: String(report.id),
 		acceptedPropertyCount: Object.keys(acceptedProps).length,
-		alarmTriggered,
+		alarmTriggered: createdAlarms.length > 0,
 	}
 }
 
 export const historyQuerySchema = z.object({
-	deviceIds: z.string().min(1),
+	deviceIds: z
+		.string()
+		.min(1)
+		.transform((s) => s.split(',').map((p) => p.trim()))
+		.refine((arr) => arr.every((p) => /^\d+$/.test(p)), {
+			message: 'deviceIds 必须为逗号分隔的数字 ID',
+		}),
 	propertyIdentifier: z.string().min(1),
 	start: z.string().datetime({ offset: true }),
 	end: z.string().datetime({ offset: true }),
@@ -149,10 +199,7 @@ export const historyQuerySchema = z.object({
 export async function queryHistory(raw: unknown): Promise<TelemetryPoint[]> {
 	const input = historyQuerySchema.parse(raw)
 	const prisma = usePrisma()
-	const ids = input.deviceIds
-		.split(',')
-		.map((s) => Number(s.trim()))
-		.filter((n) => Number.isFinite(n))
+	const ids = input.deviceIds.map((s) => Number(s))
 
 	const devices = await prisma.device.findMany({
 		where: { id: { in: ids } },
@@ -174,11 +221,7 @@ export async function queryHistory(raw: unknown): Promise<TelemetryPoint[]> {
 
 	return values.map((v) => {
 		const value: TelemetryValue =
-			v.valueNumber !== null
-				? Number(v.valueNumber)
-				: v.valueBoolean !== null
-					? v.valueBoolean
-					: (v.valueText ?? '')
+			v.valueNumber !== null ? Number(v.valueNumber) : (v.valueBoolean ?? false)
 		return {
 			deviceId: String(v.report.deviceId),
 			deviceCode: deviceMap.get(v.report.deviceId) ?? '',
@@ -194,16 +237,18 @@ export const alarmQuerySchema = z.object({
 	pageSize: z.coerce.number().int().min(1).max(100).default(20),
 	status: z.enum(['UNHANDLED', 'ACKNOWLEDGED', 'RECOVERED', 'IGNORED']).optional(),
 	level: z.enum(['WARNING', 'SERIOUS']).optional(),
-	deviceId: z.coerce.number().int().positive().optional(),
+	deviceId: z.string().regex(/^\d+$/).optional(),
 })
 
 export async function queryAlarms(raw: unknown): Promise<PageResult<AlarmSummary>> {
 	const input = alarmQuerySchema.parse(raw)
 	const prisma = usePrisma()
 
+	let deviceIdNum: number | undefined
 	if (input.deviceId) {
+		deviceIdNum = Number(input.deviceId)
 		const device = await prisma.device.findUnique({
-			where: { id: input.deviceId },
+			where: { id: deviceIdNum },
 			select: { id: true },
 		})
 		if (!device) {
@@ -214,7 +259,7 @@ export async function queryAlarms(raw: unknown): Promise<PageResult<AlarmSummary
 	const where: Prisma.AlarmWhereInput = {}
 	if (input.status) where.status = input.status
 	if (input.level) where.level = input.level
-	if (input.deviceId) where.deviceId = input.deviceId
+	if (deviceIdNum) where.deviceId = deviceIdNum
 
 	const [total, rows] = await Promise.all([
 		prisma.alarm.count({ where }),
@@ -257,23 +302,16 @@ export async function updateAlarmStatus(
 	const input = alarmStatusSchema.parse(raw)
 	const prisma = usePrisma()
 	const id = Number(alarmId)
-	if (Number.isNaN(id)) throw new TelemetryError('ALARM_NOT_FOUND', `报警 ${alarmId} 不存在`)
+	if (Number.isNaN(id)) throw new TelemetryError('NOT_FOUND', `报警 ${alarmId} 不存在`)
 
 	const alarm = await prisma.alarm.findUnique({ where: { id } })
-	if (!alarm) throw new TelemetryError('ALARM_NOT_FOUND', `报警 ${alarmId} 不存在`)
+	if (!alarm) throw new TelemetryError('NOT_FOUND', `报警 ${alarmId} 不存在`)
 
 	const previousStatus = alarm.status
 	const now = new Date()
 	await prisma.alarm.update({
 		where: { id },
 		data: { status: input.status, handledAt: now },
-	})
-
-	await eventBus.emit('alarm.status.changed', {
-		alarmId: String(id),
-		previousStatus,
-		status: input.status,
-		handledAt: now.toISOString(),
 	})
 
 	return { alarmId: String(id), previousStatus, status: input.status }

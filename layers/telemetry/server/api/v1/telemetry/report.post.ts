@@ -16,12 +16,12 @@ export default defineEventHandler(async (event) => {
 			})
 		}
 		if (error instanceof TelemetryError) {
-			const statusMap: Record<string, number> = {
-				DEVICE_NOT_FOUND: 404,
-				DEVICE_DISABLED: 403,
-				NO_VALID_PROPERTIES: 400,
+			const statusMap: Record<TelemetryError['code'], number> = {
+				REPORT_REJECTED: 422,
+				VALIDATION_ERROR: 400,
+				NOT_FOUND: 404,
 			}
-			return failure(event, statusMap[error.code] ?? 400, error.code, error.message)
+			return failure(event, statusMap[error.code], error.code, error.message)
 		}
 		return failure(event, 500, 'INTERNAL_ERROR', '上报处理失败')
 	}
