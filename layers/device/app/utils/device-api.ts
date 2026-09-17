@@ -1,7 +1,7 @@
 /**
- * 设备领域 - 只读接口消费层
+ * 设备领域 - 接口消费层
  * ---------------------------------------------------------------------------
- * 唯一职责：把 `docs/api-contract.md` 的 Device 只读端点收敛成类型安全函数，
+ * 唯一职责：把 `docs/api-contract.md` 的 Device 端点收敛成类型安全函数，
  * 并把冻结的 `ApiResult<T>` 统一拆包为 `data` 或抛出可展示的错误。
  *
  * 本层不做任何数据加工、不生成默认值、不缓存业务状态：
@@ -18,8 +18,13 @@ import type { ApiResult, PageResult } from '~~/shared/contracts/api'
 import type {
 	DeviceLatestValue,
 	DeviceSummary,
+	DeviceStatus,
+	CreateDeviceInput,
+	CreateProductInput,
+	ProductImportResult,
 	ProductPropertyDefinition,
 	ProductSummary,
+	UpdateDeviceInput,
 } from '~~/shared/contracts/device'
 
 /** 统一的只读请求失败信息，携带冻结契约中的 error.code 便于页面区分空/错误状态。 */
@@ -93,11 +98,20 @@ async function request<T>(
 /** 查询设备分页列表。只读，仅需 device:read。 */
 export function fetchDevicePage(
 	authHeaders: AuthHeaders,
-	query: { page: number; pageSize: number },
+	query: {
+		page: number
+		pageSize: number
+		keyword?: string
+		status?: DeviceStatus
+		productId?: string
+	},
 ): Promise<PageResult<DeviceSummary>> {
 	return request<PageResult<DeviceSummary>>('/api/v1/device/devices', authHeaders, {
 		page: query.page,
 		pageSize: query.pageSize,
+		...(query.keyword ? { keyword: query.keyword } : {}),
+		...(query.status ? { status: query.status } : {}),
+		...(query.productId ? { productId: query.productId } : {}),
 	})
 }
 
@@ -131,6 +145,75 @@ export function fetchProductProperties(
 		`/api/v1/device/products/${productId}/properties`,
 		authHeaders,
 	)
+}
+
+/** 创建固定的立式熔盐泵产品。 */
+export function createProduct(
+	input: CreateProductInput,
+	authHeaders: AuthHeaders,
+): Promise<ProductSummary> {
+	return mutate<ProductSummary>('/api/v1/device/products', 'POST', input, authHeaders)
+}
+
+/** 上传一份教师物模型 JSON，服务端完成 30 属性一致性校验与幂等导入。 */
+export function importProductProperties(
+	productId: string,
+	file: File,
+	authHeaders: AuthHeaders,
+): Promise<ProductImportResult> {
+	const form = new FormData()
+	form.append('file', file)
+	return mutate<ProductImportResult>(
+		`/api/v1/device/products/${productId}/import`,
+		'POST',
+		form,
+		authHeaders,
+	)
+}
+
+/** 新增老师目录内的设备实例。 */
+export function createDevice(
+	input: CreateDeviceInput,
+	authHeaders: AuthHeaders,
+): Promise<DeviceSummary> {
+	return mutate<DeviceSummary>('/api/v1/device/devices', 'POST', input, authHeaders)
+}
+
+/** 编辑设备名称、泵型和启用状态。 */
+export function updateDevice(
+	id: string,
+	input: UpdateDeviceInput,
+	authHeaders: AuthHeaders,
+): Promise<DeviceSummary> {
+	return mutate<DeviceSummary>(`/api/v1/device/devices/${id}`, 'PUT', input, authHeaders)
+}
+
+/** 逻辑删除设备。 */
+export function deleteDevice(id: string, authHeaders: AuthHeaders): Promise<{ id: string }> {
+	return mutate<{ id: string }>(`/api/v1/device/devices/${id}`, 'DELETE', undefined, authHeaders)
+}
+
+async function mutate<T>(
+	url: string,
+	method: 'POST' | 'PUT' | 'DELETE',
+	body: unknown,
+	authHeaders: AuthHeaders,
+): Promise<T> {
+	let result: ApiResult<T>
+	try {
+		result = await $fetch<ApiResult<T>>(url, {
+			method,
+			...(body === undefined ? {} : { body }),
+			headers: authHeaders,
+		})
+	} catch (error) {
+		throw toDeviceApiError(error)
+	}
+
+	if (!result.success) {
+		throw new DeviceApiError(0, result.error.code, result.error.message)
+	}
+	return result.data
 }
 
 /** 把 $fetch 抛出的错误映射为带契约 code 的 DeviceApiError。 */

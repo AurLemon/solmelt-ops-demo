@@ -3,6 +3,10 @@ export default defineNuxtConfig({
 	extends: ['./layers/auth', './layers/device', './layers/telemetry', './layers/dashboard'],
 	modules: ['@nuxt/ui', '@nuxt/eslint'],
 	css: ['~/assets/css/main.css'],
+	colorMode: {
+		preference: 'dark',
+		fallback: 'dark',
+	},
 	devtools: { enabled: true },
 	typescript: {
 		strict: true,
