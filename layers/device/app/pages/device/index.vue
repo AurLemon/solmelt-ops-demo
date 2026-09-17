@@ -9,6 +9,13 @@
  */
 import type { DeviceSummary } from '~~/shared/contracts/device'
 
+defineOptions({ name: 'DeviceListPage' })
+
+definePageMeta({
+	layout: false,
+	permission: 'device:read',
+})
+
 // fetchDevicePage / DeviceApiError / formatDateTime 由 Nuxt 自动导入
 // （layers/device/app/utils/ 下的导出会并入自动导入表），此处不再显式 import。
 

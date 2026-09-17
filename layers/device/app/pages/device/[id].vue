@@ -16,6 +16,13 @@
  */
 import type { DeviceSummary } from '~~/shared/contracts/device'
 
+defineOptions({ name: 'DeviceDetailPage' })
+
+definePageMeta({
+	layout: false,
+	permission: 'device:read',
+})
+
 // DeviceApiError / fetchDeviceDetail / fetchDeviceLatest / fetchProducts /
 // fetchProductProperties / formatDateTime / formatPropertyValue
 // 均由 Nuxt 自动导入（layers/device/app/utils/ 下的导出会并入自动导入表）。
