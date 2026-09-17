@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RoleSummary, UserStatus, UserSummary } from '~~/shared/contracts/auth'
 
+defineOptions({ name: 'SystemUsersPage' })
 definePageMeta({ layout: 'dashboard', permission: 'system:user:read' })
 
 const { user: currentUser, hasPermission, apiFetch } = useAuth()

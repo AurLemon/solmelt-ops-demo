@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { MenuItem, PermissionCode } from '~~/shared/contracts/auth'
 
+defineOptions({ name: 'DashboardLayout' })
+
 const route = useRoute()
 const runtimeConfig = useRuntimeConfig()
 const { user, fetchCurrentUser, hasPermission, logout, apiFetch } = useAuth()

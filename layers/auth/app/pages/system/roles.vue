@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MenuItem, RoleSummary } from '~~/shared/contracts/auth'
 
+defineOptions({ name: 'SystemRolesPage' })
 definePageMeta({ layout: 'dashboard', permission: 'system:role:read' })
 
 const { hasPermission, apiFetch } = useAuth()

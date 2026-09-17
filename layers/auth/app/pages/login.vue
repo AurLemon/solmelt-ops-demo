@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CaptchaChallenge } from '~~/shared/contracts/auth'
 
+defineOptions({ name: 'LoginPage' })
 definePageMeta({ layout: false })
 
 const { login, token, fetchCurrentUser, apiFetch } = useAuth()
