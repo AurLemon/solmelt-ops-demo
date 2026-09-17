@@ -140,7 +140,7 @@ export async function reportTelemetry(raw: unknown): Promise<TelemetryReportResu
 }
 
 export const historyQuerySchema = z.object({
-	deviceCodes: z.string().min(1),
+	deviceIds: z.string().min(1),
 	propertyIdentifier: z.string().min(1),
 	start: z.string().datetime({ offset: true }),
 	end: z.string().datetime({ offset: true }),
@@ -149,13 +149,13 @@ export const historyQuerySchema = z.object({
 export async function queryHistory(raw: unknown): Promise<TelemetryPoint[]> {
 	const input = historyQuerySchema.parse(raw)
 	const prisma = usePrisma()
-	const codes = input.deviceCodes
+	const ids = input.deviceIds
 		.split(',')
-		.map((c) => c.trim())
-		.filter(Boolean)
+		.map((s) => Number(s.trim()))
+		.filter((n) => Number.isFinite(n))
 
 	const devices = await prisma.device.findMany({
-		where: { deviceCode: { in: codes } },
+		where: { id: { in: ids } },
 		select: { id: true, deviceCode: true },
 	})
 	const deviceMap = new Map(devices.map((d) => [d.id, d.deviceCode]))
@@ -193,26 +193,28 @@ export const alarmQuerySchema = z.object({
 	page: z.coerce.number().int().min(1).default(1),
 	pageSize: z.coerce.number().int().min(1).max(100).default(20),
 	status: z.enum(['UNHANDLED', 'ACKNOWLEDGED', 'RECOVERED', 'IGNORED']).optional(),
-	deviceCode: z.string().optional(),
+	level: z.enum(['WARNING', 'SERIOUS']).optional(),
+	deviceId: z.coerce.number().int().positive().optional(),
 })
 
 export async function queryAlarms(raw: unknown): Promise<PageResult<AlarmSummary>> {
 	const input = alarmQuerySchema.parse(raw)
 	const prisma = usePrisma()
 
-	let deviceId: number | undefined
-	if (input.deviceCode) {
+	if (input.deviceId) {
 		const device = await prisma.device.findUnique({
-			where: { deviceCode: input.deviceCode },
+			where: { id: input.deviceId },
 			select: { id: true },
 		})
-		deviceId = device?.id
-		if (!deviceId) return { items: [], page: input.page, pageSize: input.pageSize, total: 0 }
+		if (!device) {
+			return { items: [], page: input.page, pageSize: input.pageSize, total: 0 }
+		}
 	}
 
 	const where: Prisma.AlarmWhereInput = {}
 	if (input.status) where.status = input.status
-	if (deviceId) where.deviceId = deviceId
+	if (input.level) where.level = input.level
+	if (input.deviceId) where.deviceId = input.deviceId
 
 	const [total, rows] = await Promise.all([
 		prisma.alarm.count({ where }),
