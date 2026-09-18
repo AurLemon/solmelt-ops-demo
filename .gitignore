@@ -9,6 +9,7 @@ generated/
 scripts/simulator/.venv/
 coverage/
 .DS_Store
+.workbuddy/
 *.log
 *.pid
 ~$*.docx

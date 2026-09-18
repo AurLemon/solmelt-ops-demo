@@ -336,7 +336,8 @@ async function submit(): Promise<void> {
 		})
 	} catch (error) {
 		submitting.value = false
-		registerFailure(error instanceof Error ? error.message : '登录失败')
+		// 文案沿用 main 侧的改进：把「登录失败」补成可执行的提示
+		registerFailure(error instanceof Error ? error.message : '登录失败，请检查登录信息')
 		// 旧验证码对本次输入已经没有意义（错误可能就是它），自动换一张并把焦点送回输入框。
 		await refreshCaptcha({ auto: true, focus: !locked.value })
 		return
@@ -648,6 +649,12 @@ onUnmounted(() => {
 						<span>内置账号：<b>admin</b>（管理员）、<b>operator</b>（操作员），密码由组长分发</span>
 						<span>验证码 5 分钟有效 · 一次性使用</span>
 					</p>
+
+					<!-- 外观切换：沿用仓库公共组件 ThemeToggleButton，保证登录页也跟随明暗主题 -->
+					<div class="theme-row anim d8">
+						<span>外观</span>
+						<ThemeToggleButton />
+					</div>
 				</div>
 			</section>
 		</div>
@@ -1731,5 +1738,104 @@ onUnmounted(() => {
 		stroke-dashoffset: 0;
 		opacity: 0.9;
 	}
+}
+
+/* =========================== 外观切换行 =========================== */
+.theme-row {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: center;
+	margin-top: 12px;
+	padding-top: 12px;
+	font-size: 11px;
+	color: var(--ink-mute);
+	border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+/* ===========================================================================
+   浅色主题适配：登录页自带深色氛围，跟随公共 colorMode 切换（html.light）
+   只覆盖「深色底 + 浅色字」这类在浅色下会失效的表面，语义色（成功/失败/警示）保持不变
+   =========================================================================== */
+:global(html.light) .login-screen {
+	--ink: #0f172a;
+	--ink-dim: #475569;
+	--ink-mute: #64748b;
+	color: var(--ink);
+	background: #eef2f7;
+}
+:global(html.light) .ambient {
+	background:
+		radial-gradient(ellipse 120% 90% at 12% 0%, #ffffff 0%, transparent 55%),
+		radial-gradient(ellipse 100% 80% at 100% 100%, #e4ebf6 0%, transparent 60%),
+		linear-gradient(160deg, #f5f8fc 0%, #e9eef7 52%, #f7f9fc 100%);
+}
+:global(html.light) .ambient::after {
+	background: radial-gradient(
+		ellipse 88% 72% at 50% 46%,
+		transparent 62%,
+		rgba(15, 23, 42, 0.07) 100%
+	);
+}
+:global(html.light) .blobs i {
+	opacity: 0.45;
+}
+:global(html.light) .brand-head h1 {
+	background: linear-gradient(92deg, #0f172a, #1d4ed8 70%, #0e7490);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+:global(html.light) .brand-ghost {
+	color: rgba(37, 99, 235, 0.07);
+	-webkit-text-stroke: 1px rgba(37, 99, 235, 0.2);
+}
+:global(html.light) .pump .outline {
+	stroke: rgba(37, 99, 235, 0.42);
+}
+:global(html.light) .pump .outline-dim {
+	stroke: rgba(37, 99, 235, 0.22);
+}
+:global(html.light) .facts li {
+	background: rgba(15, 23, 42, 0.035);
+	border-color: rgba(15, 23, 42, 0.1);
+}
+:global(html.light) .facts b {
+	color: #0f172a;
+}
+:global(html.light) .chain li {
+	color: #1d4ed8;
+	background: rgba(37, 99, 235, 0.07);
+	border-color: rgba(37, 99, 235, 0.2);
+}
+:global(html.light) .panel {
+	background: linear-gradient(
+		158deg,
+		rgba(255, 255, 255, 0.94),
+		rgba(255, 255, 255, 0.8) 62%,
+		rgba(255, 255, 255, 0.9)
+	);
+	border-color: rgba(15, 23, 42, 0.12);
+	box-shadow:
+		0 30px 70px -34px rgba(15, 23, 42, 0.4),
+		0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+:global(html.light) .field input {
+	color: var(--ink);
+	background: rgba(255, 255, 255, 0.92);
+	border-color: rgba(15, 23, 42, 0.16);
+}
+:global(html.light) .field input:focus {
+	background: #ffffff;
+}
+:global(html.light) .field input::placeholder {
+	color: #94a3b8;
+}
+:global(html.light) .chk .box {
+	background: #ffffff;
+	border-color: rgba(15, 23, 42, 0.24);
+}
+:global(html.light) .theme-row {
+	border-top-color: rgba(15, 23, 42, 0.1);
 }
 </style>

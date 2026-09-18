@@ -37,7 +37,14 @@ Dashboard 只读聚合
 - `issueAccessToken(claims)` 使用本机 `JWT_SECRET` 签发 8 小时有效的 HS256 Token，返回 Token 和 UTC 到期时间。
 - `authorizeRequest(event, permission?)` 返回显式判别结果。成功分支携带 `AuthClaims`；失败分支携带冻结格式的 `ApiFailure`。
 - 缺失、空白、无效或过期 Token 返回 `401 UNAUTHENTICATED`；凭证有效但缺少权限返回 `403 FORBIDDEN`。
-- 浏览器端由 Auth Layer 使用 `localStorage` 保存 Token；收到 401、Token 过期或主动退出时必须清除。密码、验证码、Token 和 `JWT_SECRET` 不得写入日志、截图或协作反馈。
+- 浏览器端由 Auth Layer 使用 `solmelt_token` Cookie 保存 Token，以便 SSR 中间件和客户端导航读取；请求业务 API 时仍统一组装 `Authorization: Bearer <token>`。收到 401、Token 过期或主动退出时必须清除 Cookie。密码、验证码、Token 和 `JWT_SECRET` 不得写入日志、截图或协作反馈。
+
+## 应用壳与配置所有权
+
+- 根 `nuxt.config.ts` 维护影响整个应用的模块、主题默认值、字体 Provider、运行时配置和公共 Head；业务 Layer 不得用自己的 `nuxt.config.ts` 临时覆盖全局行为。
+- Layer 的 `nuxt.config.ts` 只声明该领域私有且可独立解释的 Nuxt 配置。确需全局调整时，由组长在 `main` 修改根配置，并同步架构或 UI 文档。
+- 菜单路径、页面文件生成的路由和 `definePageMeta` 权限必须一致；新增或改名后必须从统一后台侧栏进行一次客户端导航验证，直接输入 URL 或刷新成功不能替代该验证。
+- 页面必须同时处理加载、空数据、失败和成功反馈；错误不得只写入控制台或因刷新验证码、重新请求等后续动作被立即清空。
 
 ## Layer 内部组织
 

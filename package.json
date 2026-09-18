@@ -25,6 +25,10 @@
 		"db:seed": "prisma db seed",
 		"db:studio": "prisma studio",
 		"env:check": "node tooling/check-environment.mjs",
+		"simulator:setup": "node tooling/run-simulator.mjs --setup",
+		"simulator": "node tooling/run-simulator.mjs",
+		"simulator:once": "pnpm simulator -- --once",
+		"simulator:normal": "pnpm simulator -- --abnormal-rate 0",
 		"scope:check": "node tooling/check-scope.mjs",
 		"verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm db:validate && pnpm build",
 		"pr:check": "pnpm scope:check && pnpm verify"
@@ -37,7 +41,6 @@
 		"bcryptjs": "3.0.3",
 		"dotenv": "17.4.2",
 		"echarts": "6.1.0",
-		"fflate": "0.8.3",
 		"jose": "6.2.12",
 		"mariadb": "3.5.4",
 		"nuxt": "4.5.2",

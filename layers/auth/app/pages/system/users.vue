@@ -18,11 +18,22 @@ const errorMessage = ref('')
 const loading = ref(false)
 
 const roleOptions = computed(() =>
-	roles.value.map((role) => ({ label: `${role.name}（${role.code}）`, value: role.id })),
+	roles.value.map((role) => ({ label: `${role.name}（${role.code}）`, value: String(role.id) })),
 )
+const selectedRoleId = computed({
+	get: () => String(form.value.roleId),
+	set: (value: string) => {
+		form.value.roleId = Number(value)
+	},
+})
+const statusOptions = [
+	{ label: '启用', value: 'ACTIVE' },
+	{ label: '禁用', value: 'DISABLED' },
+] satisfies ReadonlyArray<{ label: string; value: UserStatus }>
 
 const editorOpen = ref(false)
 const editingId = ref<number | null>(null)
+const removalTarget = ref<UserSummary | null>(null)
 const form = ref({
 	username: '',
 	password: '',
@@ -135,11 +146,16 @@ async function submitReset(): Promise<void> {
 	}
 }
 
-async function removeUser(target: UserSummary): Promise<void> {
-	if (!window.confirm(`确认删除用户「${target.displayName}」（逻辑删除）？`)) return
+function requestUserRemoval(target: UserSummary): void {
+	removalTarget.value = target
+}
+
+async function confirmUserRemoval(): Promise<void> {
+	if (!removalTarget.value) return
 	errorMessage.value = ''
 	try {
-		await apiFetch(`/api/v1/auth/users/${target.id}`, { method: 'DELETE' })
+		await apiFetch(`/api/v1/auth/users/${removalTarget.value.id}`, { method: 'DELETE' })
+		removalTarget.value = null
 		await loadUsers()
 	} catch (error) {
 		errorMessage.value = error instanceof Error ? error.message : '删除失败'
@@ -168,7 +184,9 @@ onMounted(() => {
 	<section class="space-y-4">
 		<div class="flex flex-wrap items-center justify-between gap-3">
 			<div>
-				<h1 class="text-xl font-semibold">用户管理</h1>
+				<h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+					用户管理
+				</h1>
 				<p class="text-sm text-slate-400">
 					共 {{ total }} 个账号；删除为逻辑删除，不影响历史数据。
 				</p>
@@ -188,67 +206,90 @@ onMounted(() => {
 			:description="errorMessage"
 		/>
 
-		<div
-			v-if="editorOpen && canWrite"
-			class="rounded-lg border border-slate-800 bg-slate-900/70 p-4"
+		<UModal
+			v-if="canWrite"
+			v-model:open="editorOpen"
+			:title="editingId === null ? '新建用户' : `编辑用户：${form.username}`"
+			description="账号、角色与启用状态会按当前表单一次性保存。"
+			:ui="{ content: 'max-w-2xl' }"
 		>
-			<h2 class="mb-3 font-medium">
-				{{ editingId === null ? '新建用户' : `编辑用户：${form.username}` }}
-			</h2>
-			<form class="grid gap-3 md:grid-cols-2" @submit.prevent="submitEditor">
-				<label class="space-y-1 text-sm">
-					<span class="text-slate-300">用户名</span>
-					<UInput v-model="form.username" class="w-full" :disabled="editingId !== null" />
-				</label>
-				<label v-if="editingId === null" class="space-y-1 text-sm">
-					<span class="text-slate-300">初始密码</span>
-					<UInput v-model="form.password" type="password" class="w-full" />
-				</label>
-				<label class="space-y-1 text-sm">
-					<span class="text-slate-300">显示名</span>
-					<UInput v-model="form.displayName" class="w-full" />
-				</label>
-				<label class="space-y-1 text-sm">
-					<span class="text-slate-300">角色</span>
-					<select
-						v-model.number="form.roleId"
-						class="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
-					>
-						<option v-for="option in roleOptions" :key="option.value" :value="option.value">
-							{{ option.label }}
-						</option>
-					</select>
-				</label>
-				<label class="space-y-1 text-sm">
-					<span class="text-slate-300">状态</span>
-					<select
-						v-model="form.status"
-						class="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
-					>
-						<option value="ACTIVE">启用</option>
-						<option value="DISABLED">禁用</option>
-					</select>
-				</label>
-				<div class="flex items-end gap-2 md:col-span-2">
-					<UButton type="submit" color="warning">保存</UButton>
-					<UButton color="neutral" variant="soft" @click="editorOpen = false">取消</UButton>
-				</div>
-			</form>
-		</div>
+			<template #body>
+				<form id="user-editor" class="grid gap-3 md:grid-cols-2" @submit.prevent="submitEditor">
+					<label class="space-y-1 text-sm">
+						<span class="text-slate-300">用户名</span>
+						<UInput v-model="form.username" class="w-full" :disabled="editingId !== null" />
+					</label>
+					<label v-if="editingId === null" class="space-y-1 text-sm">
+						<span class="text-slate-300">初始密码</span>
+						<UInput v-model="form.password" type="password" class="w-full" />
+					</label>
+					<label class="space-y-1 text-sm">
+						<span class="text-slate-300">显示名</span>
+						<UInput v-model="form.displayName" class="w-full" />
+					</label>
+					<label class="space-y-1 text-sm">
+						<span class="text-slate-300">角色</span>
+						<USelect v-model="selectedRoleId" class="w-full" :items="roleOptions" />
+					</label>
+					<label class="space-y-1 text-sm">
+						<span class="text-slate-300">状态</span>
+						<USelect v-model="form.status" class="w-full" :items="statusOptions" />
+					</label>
+				</form>
+			</template>
+			<template #footer>
+				<UButton type="submit" form="user-editor" color="warning">保存</UButton>
+				<UButton color="neutral" variant="soft" @click="editorOpen = false">取消</UButton>
+			</template>
+		</UModal>
 
-		<div v-if="resetTarget" class="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
-			<h2 class="mb-3 font-medium">
-				重置密码：{{ resetTarget.displayName }}（{{ resetTarget.username }}）
-			</h2>
-			<form class="flex flex-wrap items-end gap-3" @submit.prevent="submitReset">
-				<label class="space-y-1 text-sm">
-					<span class="text-slate-300">新密码</span>
-					<UInput v-model="resetPassword" type="password" class="w-64" />
-				</label>
-				<UButton type="submit" color="warning">确认重置</UButton>
+		<UModal
+			:open="Boolean(removalTarget)"
+			title="删除用户"
+			:description="
+				removalTarget ? `确认删除用户「${removalTarget.displayName}」？账号会逻辑删除。` : ''
+			"
+			:ui="{ content: 'max-w-lg' }"
+			@update:open="
+				(open) => {
+					if (!open) removalTarget = null
+				}
+			"
+		>
+			<template #footer>
+				<UButton color="error" @click="confirmUserRemoval">确认删除</UButton>
+				<UButton color="neutral" variant="soft" @click="removalTarget = null">取消</UButton>
+			</template>
+		</UModal>
+
+		<UModal
+			:open="Boolean(resetTarget)"
+			title="重置密码"
+			:description="resetTarget ? `${resetTarget.displayName}（${resetTarget.username}）` : ''"
+			:ui="{ content: 'max-w-lg' }"
+			@update:open="
+				(open) => {
+					if (!open) resetTarget = null
+				}
+			"
+		>
+			<template #body>
+				<form
+					id="reset-password"
+					class="flex flex-wrap items-end gap-3"
+					@submit.prevent="submitReset"
+				>
+					<label class="space-y-1 text-sm">
+						<span class="text-slate-300">新密码</span>
+						<UInput v-model="resetPassword" type="password" class="w-64" />
+					</label>
+				</form>
+			</template>
+			<template #footer>
+				<UButton type="submit" form="reset-password" color="warning">确认重置</UButton>
 				<UButton color="neutral" variant="soft" @click="resetTarget = null">取消</UButton>
-			</form>
-		</div>
+			</template>
+		</UModal>
 
 		<div class="overflow-x-auto rounded-lg border border-slate-800">
 			<table class="w-full text-sm">
@@ -283,7 +324,7 @@ onMounted(() => {
 								color="error"
 								variant="soft"
 								:disabled="currentUser?.id === item.id"
-								@click="removeUser(item)"
+								@click="requestUserRemoval(item)"
 							>
 								删除
 							</UButton>

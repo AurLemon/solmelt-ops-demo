@@ -1,9 +1,8 @@
 import 'dotenv/config'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import { hash } from 'bcryptjs'
-import { strFromU8, unzipSync } from 'fflate'
 import {
 	DeviceStatus,
 	PrismaClient,
@@ -45,12 +44,21 @@ function createPrismaClient(): PrismaClient {
 }
 
 async function loadDeviceModels(): Promise<SourceDeviceModel[]> {
-	const archivePath = resolve('.requirements/学生复现-物模型.zip')
-	const archive = unzipSync(new Uint8Array(await readFile(archivePath)))
-	const models = Object.entries(archive)
-		.filter(([fileName]) => fileName.endsWith('.json'))
-		.map(([, contents]) => JSON.parse(strFromU8(contents)) as SourceDeviceModel)
-		.sort((left, right) => left.deviceCode.localeCompare(right.deviceCode))
+	const modelsDirectory = resolve('.requirements/学生复现-物模型')
+	const entries = await readdir(modelsDirectory, { withFileTypes: true })
+	const modelFiles = entries
+		.filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+		.map((entry) => entry.name)
+		.sort((left, right) => left.localeCompare(right))
+
+	const models = (
+		await Promise.all(
+			modelFiles.map(async (fileName) => {
+				const contents = await readFile(resolve(modelsDirectory, fileName), 'utf8')
+				return JSON.parse(contents) as SourceDeviceModel
+			}),
+		)
+	).sort((left, right) => left.deviceCode.localeCompare(right.deviceCode))
 
 	if (models.length !== expectedDeviceCount) {
 		throw new Error(`物模型文件数量应为 ${expectedDeviceCount}，实际为 ${models.length}`)
