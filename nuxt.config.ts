@@ -8,6 +8,7 @@ export default defineNuxtConfig({
 		fallback: 'dark',
 	},
 	fonts: {
+		families: [{ name: 'Rubik', provider: 'none' }],
 		providers: {
 			google: false,
 			googleicons: false,
@@ -33,6 +34,14 @@ export default defineNuxtConfig({
 	app: {
 		head: {
 			title: 'SolMelt',
+			link: [
+				{ rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+				{ rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+				{
+					rel: 'stylesheet',
+					href: 'https://fonts.googleapis.com/css2?family=Rubik:wght@300..900&display=swap',
+				},
+			],
 			meta: [
 				{ charset: 'utf-8' },
 				{ name: 'viewport', content: 'width=device-width, initial-scale=1' },

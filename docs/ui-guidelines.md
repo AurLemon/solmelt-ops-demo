@@ -9,6 +9,8 @@
 - 主题：首次访问默认暗色；用户手动切换后沿用 Nuxt Color Mode 的持久化结果。浅色与暗色是同等支持的状态，不允许只在全局 CSS 中事后补救不可读组件。
 - 色彩：中性灰用于结构，琥珀色用于品牌和主要强调，绿色表示正常/成功，红色表示错误/危险，黄色表示警告。不要用单一色系覆盖整个页面。
 
+全局无衬线字体使用 Rubik，由根 `nuxt.config.ts` 的 Head 通过 Google Fonts CDN 加载（`display=swap`），`app/assets/css/main.css` 统一设置 `--font-sans`。中文回退系统无衬线字体，等宽字体保持原有配置。Rubik 在 Nuxt Fonts 中设置 `provider: 'none'`，避免构建时再次下载或改用其他字体源。Layer 不单独配置字体或字体 CDN。
+
 ## 页面结构
 
 - 后台业务页统一使用 `dashboard` Layout，并在 `definePageMeta` 声明页面读取权限；大屏可以使用专用全屏结构，但仍复用主题与鉴权边界。
