@@ -178,7 +178,6 @@ onMounted(async () => {
 					<div class="space-y-2">
 						<div class="flex items-center justify-between gap-3">
 							<span class="text-sm font-medium text-slate-700 dark:text-slate-300">验证码</span>
-							<span class="text-xs text-slate-400 dark:text-slate-500">点击图片刷新</span>
 						</div>
 						<div class="flex items-center gap-3">
 							<UInput
@@ -186,6 +185,7 @@ onMounted(async () => {
 								placeholder="四位验证码"
 								icon="i-lucide-shield-check"
 								class="min-w-0 flex-1"
+								:ui="{ base: 'h-10' }"
 								maxlength="4"
 								autocomplete="off"
 							/>
