@@ -14,6 +14,20 @@ const challenge = ref<CaptchaChallenge | null>(null)
 const errorMessage = ref('')
 const submitting = ref(false)
 const redirecting = ref(false)
+const feedbackContent = useTemplateRef<HTMLElement>('feedbackContent')
+const feedbackHeight = ref(0)
+let feedbackObserver: ResizeObserver | undefined
+
+onMounted(() => {
+	const content = feedbackContent.value
+	if (!content) return
+	feedbackObserver = new ResizeObserver(() => {
+		feedbackHeight.value = content.getBoundingClientRect().height
+	})
+	feedbackObserver.observe(content)
+})
+
+onBeforeUnmount(() => feedbackObserver?.disconnect())
 
 // 解码 base64 得到原始 SVG，直接内联进 DOM 渲染，避免 data URI 加载失败。
 const captchaSvg = computed(() => {
@@ -45,7 +59,6 @@ async function submit(): Promise<void> {
 	}
 
 	submitting.value = true
-	errorMessage.value = ''
 	try {
 		await login({
 			username: username.value,
@@ -151,7 +164,7 @@ onMounted(async () => {
 					<ThemeToggleButton />
 				</div>
 
-				<form class="space-y-5" @submit.prevent="submit">
+				<form class="login-form" @submit.prevent="submit">
 					<label class="block space-y-2">
 						<span class="text-sm font-medium text-slate-700 dark:text-slate-300">用户名</span>
 						<UInput
@@ -208,19 +221,21 @@ onMounted(async () => {
 						</div>
 					</div>
 
-					<Transition name="login-feedback" mode="out-in">
-						<UAlert
-							v-if="errorMessage"
-							:key="errorMessage"
-							role="alert"
-							aria-live="assertive"
-							icon="i-lucide-circle-alert"
-							color="error"
-							variant="subtle"
-							title="登录失败"
-							:description="errorMessage"
-						/>
-					</Transition>
+					<div class="login-feedback" :style="{ height: `${feedbackHeight}px` }">
+						<div ref="feedbackContent">
+							<div v-if="errorMessage" class="pt-5">
+								<UAlert
+									role="alert"
+									aria-live="assertive"
+									icon="i-lucide-circle-alert"
+									color="error"
+									variant="subtle"
+									title="登录失败"
+									:description="errorMessage"
+								/>
+							</div>
+						</div>
+					</div>
 
 					<UButton type="submit" block color="warning" size="lg" :loading="submitting">
 						<span class="font-semibold">登录</span>
@@ -322,26 +337,15 @@ onMounted(async () => {
 	width: 100%;
 }
 
-.login-feedback-enter-active {
-	transition:
-		opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
-		transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+.login-form > * + * {
+	margin-top: 1.25rem;
 }
 
-.login-feedback-leave-active {
-	transition:
-		opacity 150ms ease-in,
-		transform 150ms ease-in;
-}
-
-.login-feedback-enter-from {
-	opacity: 0;
-	transform: translateY(-8px) scale(0.985);
-}
-
-.login-feedback-leave-to {
-	opacity: 0;
-	transform: translateY(-4px) scale(0.99);
+.login-form > .login-feedback {
+	/* Keep spacing inside the measured content so height and spacing animate together. */
+	margin-block: 0;
+	overflow: hidden;
+	transition: height 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -353,8 +357,7 @@ onMounted(async () => {
 	.login-success-enter-active,
 	.login-success-leave-active,
 	.captcha-image,
-	.login-feedback-enter-active,
-	.login-feedback-leave-active {
+	.login-form > .login-feedback {
 		transition: none;
 	}
 }
